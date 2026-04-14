@@ -1,0 +1,10 @@
+node_modules
+.next
+dist
+build
+.vercel
+coverage
+.env
+*.zip
+*.rar
+.DS_Store

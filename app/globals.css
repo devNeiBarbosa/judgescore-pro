@@ -1,0 +1,13 @@
+/* Minimal reset - styled-components handles theming */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+[data-hydration-error] {
+  display: none !important;
+}

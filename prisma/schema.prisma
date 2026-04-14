@@ -1,0 +1,549 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ATLETA
+  ARBITRO_AUXILIAR
+  ARBITRO_CENTRAL
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum ChampionshipStatus {
+  DRAFT
+  PUBLISHED
+  ONGOING
+  FINISHED
+}
+
+enum ParticipationStatus {
+  PRE_REGISTERED
+  WEIGHED
+  CONFIRMED
+  DISQUALIFIED
+}
+
+enum CategoryRegistrationStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum ProductType {
+  BASE_REGISTRATION
+  EXTRA_CATEGORY
+  BACKSTAGE_PASS
+  SERVICE
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum InscriptionStatus {
+  REGISTERED
+  CONFIRMED
+  CHECKIN_PENDING
+  CHECKIN_DONE
+  COMPLETED
+}
+
+enum PlanType {
+  EVENTO
+  SAAS
+  LICENCA
+}
+
+enum LicenseType {
+  PER_EVENT
+  MONTHLY
+  LIFETIME
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  TRIAL
+  EXPIRED
+  CANCELLED
+}
+
+enum CategoryStatus {
+  OPEN_FOR_JUDGING
+  ALL_JUDGES_FINALIZED
+  RESULT_FINALIZED
+  REOPENED
+}
+
+model Organization {
+  id                   String             @id @default(cuid())
+  name                 String
+  slug                 String             @unique
+  document             String?            @unique
+  email                String?
+  phone                String?
+  logoUrl              String?
+  planType             PlanType           @default(EVENTO)
+  licenseType          LicenseType        @default(PER_EVENT)
+  subscriptionStatus   SubscriptionStatus @default(INACTIVE)
+  isBrandingAllowed    Boolean            @default(false)
+  maintenanceRequired  Boolean            @default(false)
+  maxChampionships     Int                @default(1)
+  expiresAt            DateTime?
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  isActive             Boolean            @default(true)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  users                 User[]
+  members               OrganizationMember[]
+  championships         Championship[]
+  championshipReferees  ChampionshipReferee[]
+  categories            Category[]
+  participations        Participation[]
+  categoryRegistrations CategoryRegistration[]
+  products              Product[]
+  combos                Combo[]
+  comboProducts         ComboProduct[]
+  orders                Order[]
+  orderItems            OrderItem[]
+  judgments             Judgment[]
+  results               Result[]
+  categoryResults       CategoryResult[]
+  invitations           Invitation[]
+  inscriptions          Inscription[]
+  auditLogs             AuditLog[]
+
+  @@index([slug])
+  @@index([subscriptionStatus])
+  @@index([isActive])
+}
+
+model OrganizationMember {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String
+  role           String   @default("MEMBER")
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+}
+
+model Invitation {
+  id             String    @id @default(cuid())
+  email          String
+  token          String    @unique
+  organizationId String
+  role           UserRole  @default(ATLETA)
+  expiresAt      DateTime
+  usedAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([organizationId, email])
+  @@index([expiresAt])
+  @@index([usedAt])
+}
+
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  password       String
+  name           String
+  cpf            String?   @unique
+  phone          String?
+  birthDate      DateTime?
+  instagram      String?
+  role               UserRole  @default(ATLETA)
+  organizationId     String?
+  mustChangePassword Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization               Organization?         @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  participations             Participation[]
+  orders                     Order[]
+  championshipReferees       ChampionshipReferee[]
+  inscriptions               Inscription[]
+  auditLogs                  AuditLog[]
+  organizationMembers        OrganizationMember[]
+  judgeJudgments             Judgment[]            @relation("JudgeJudgments")
+  generatedCategoryResults   CategoryResult[]      @relation("CategoryResultGeneratedBy")
+  invalidatedCategoryResults CategoryResult[]      @relation("CategoryResultInvalidatedBy")
+
+  @@index([role])
+  @@index([organizationId])
+}
+
+model Championship {
+  id             String             @id @default(cuid())
+  name           String
+  slug           String
+  date           DateTime
+  description    String?
+  venue          String?
+  city           String?
+  state          String?
+  bannerUrl      String?
+  logoUrl        String?
+  status         ChampionshipStatus @default(DRAFT)
+  organizationId String
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  organization    Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  categories      Category[]
+  participations  Participation[]
+  inscriptions    Inscription[]
+  judgments       Judgment[]
+  categoryResults CategoryResult[]
+  products        Product[]
+  combos          Combo[]
+  orders          Order[]
+  referees        ChampionshipReferee[]
+
+  @@unique([organizationId, slug])
+  @@index([status])
+  @@index([slug])
+  @@index([organizationId])
+}
+
+model ChampionshipReferee {
+  id             String   @id @default(cuid())
+  championshipId String
+  refereeId      String
+  organizationId String
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  championship Championship @relation(fields: [championshipId], references: [id], onDelete: Cascade)
+  referee      User         @relation(fields: [refereeId], references: [id], onDelete: Cascade)
+
+  @@unique([championshipId, refereeId])
+  @@index([refereeId])
+  @@index([organizationId])
+}
+
+model Category {
+  id             String         @id @default(cuid())
+  name           String
+  description    String?
+  championshipId String
+  organizationId String
+  status         CategoryStatus @default(OPEN_FOR_JUDGING)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  organization          Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  championship          Championship           @relation(fields: [championshipId], references: [id], onDelete: Cascade)
+  categoryRegistrations CategoryRegistration[]
+  participations        Participation[]
+  judgments             Judgment[]
+  results               Result[]
+  categoryResults       CategoryResult[]
+
+  @@index([championshipId])
+  @@index([organizationId])
+  @@index([status])
+}
+
+model Participation {
+  id             String              @id @default(cuid())
+  athleteId      String
+  championshipId String
+  categoryId     String?
+  organizationId String
+  inscriptionId  String?
+  athleteNumber  Int?
+  weight         Decimal?            @db.Decimal(5, 2)
+  height         Decimal?            @db.Decimal(5, 2)
+  status         ParticipationStatus @default(CONFIRMED)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  organization          Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  athlete               User                   @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  championship          Championship           @relation(fields: [championshipId], references: [id], onDelete: Cascade)
+  category              Category?              @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  inscription           Inscription?           @relation(fields: [inscriptionId], references: [id], onDelete: SetNull)
+  categoryRegistrations CategoryRegistration[]
+  judgments             Judgment[]
+  results               Result[]
+
+  @@unique([championshipId, athleteNumber])
+  @@unique([athleteId, championshipId, categoryId])
+  @@index([championshipId])
+  @@index([athleteId])
+  @@index([organizationId])
+  @@index([categoryId])
+  @@index([inscriptionId])
+  @@index([organizationId, championshipId])
+  @@index([organizationId, championshipId, status])
+}
+
+model Inscription {
+  id                     String            @id @default(cuid())
+  athleteId              String
+  championshipId         String
+  organizationId         String
+  baseRegistration       Boolean           @default(true)
+  extraCategories        Int               @default(0)
+  totalCategoriesAllowed Int               @default(1)
+  status                 InscriptionStatus @default(REGISTERED)
+  painting               Boolean           @default(false)
+  photos                 Boolean           @default(false)
+  weight                 Decimal?          @db.Decimal(5, 2)
+  height                 Decimal?          @db.Decimal(5, 2)
+  athleteNumber          String?
+  checkedInAt            DateTime?
+  createdAt              DateTime          @default(now())
+
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  athlete        User            @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  championship   Championship    @relation(fields: [championshipId], references: [id], onDelete: Cascade)
+  participations Participation[]
+
+  @@unique([athleteId, championshipId])
+  @@unique([championshipId, athleteNumber])
+  @@index([athleteId])
+  @@index([championshipId])
+  @@index([organizationId])
+  @@index([status])
+  @@index([organizationId, championshipId])
+  @@index([organizationId, championshipId, status])
+}
+
+model CategoryRegistration {
+  id              String                     @id @default(cuid())
+  participationId String
+  categoryId      String
+  organizationId  String
+  status          CategoryRegistrationStatus @default(PENDING)
+  createdAt       DateTime                   @default(now())
+  updatedAt       DateTime                   @updatedAt
+
+  organization  Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  participation Participation @relation(fields: [participationId], references: [id], onDelete: Cascade)
+  category      Category      @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([participationId, categoryId])
+  @@index([categoryId])
+  @@index([organizationId])
+}
+
+model Product {
+  id             String      @id @default(cuid())
+  championshipId String
+  organizationId String
+  name           String
+  description    String?
+  price          Decimal     @db.Decimal(10, 2)
+  type           ProductType
+  isActive       Boolean     @default(true)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  championship Championship   @relation(fields: [championshipId], references: [id], onDelete: Cascade)
+  comboItems   ComboProduct[]
+  orderItems   OrderItem[]
+
+  @@index([championshipId])
+  @@index([organizationId])
+  @@index([isActive])
+}
+
+model Combo {
+  id              String   @id @default(cuid())
+  championshipId  String
+  organizationId  String
+  name            String
+  description     String?
+  originalPrice   Decimal  @db.Decimal(10, 2)
+  discountedPrice Decimal  @db.Decimal(10, 2)
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  championship Championship   @relation(fields: [championshipId], references: [id], onDelete: Cascade)
+  products     ComboProduct[]
+  orderItems   OrderItem[]
+
+  @@index([championshipId])
+  @@index([organizationId])
+  @@index([isActive])
+}
+
+model ComboProduct {
+  id             String @id @default(cuid())
+  comboId        String
+  productId      String
+  organizationId String
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  combo        Combo        @relation(fields: [comboId], references: [id], onDelete: Cascade)
+  product      Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([comboId, productId])
+  @@index([organizationId])
+}
+
+model Order {
+  id               String        @id @default(cuid())
+  athleteId        String
+  championshipId   String
+  organizationId   String
+  totalAmount      Decimal       @db.Decimal(10, 2)
+  paymentStatus    PaymentStatus @default(PENDING)
+  stripePaymentId  String?
+  stripeCustomerId String?
+  ipAddress        String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  athlete      User         @relation(fields: [athleteId], references: [id], onDelete: Restrict)
+  championship Championship @relation(fields: [championshipId], references: [id], onDelete: Restrict)
+  items        OrderItem[]
+
+  @@index([athleteId])
+  @@index([championshipId])
+  @@index([organizationId])
+  @@index([paymentStatus])
+  @@index([stripePaymentId])
+}
+
+model OrderItem {
+  id             String  @id @default(cuid())
+  orderId        String
+  productId      String?
+  comboId        String?
+  organizationId String
+  quantity       Int     @default(1)
+  unitPrice      Decimal @db.Decimal(10, 2)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  order        Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product      Product?     @relation(fields: [productId], references: [id], onDelete: Restrict)
+  combo        Combo?       @relation(fields: [comboId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([organizationId])
+}
+
+model Judgment {
+  id              String   @id @default(cuid())
+  participationId String
+  judgeId         String
+  championshipId  String
+  categoryId      String
+  organizationId  String
+  position        Int?
+  finalized       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization  Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  participation Participation @relation(fields: [participationId], references: [id], onDelete: Restrict)
+  judge         User          @relation("JudgeJudgments", fields: [judgeId], references: [id], onDelete: Restrict)
+  championship  Championship  @relation(fields: [championshipId], references: [id], onDelete: Restrict)
+  category      Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+
+  @@unique([judgeId, participationId])
+  @@unique([organizationId, judgeId, championshipId, categoryId, position])
+  @@index([organizationId, championshipId, categoryId, judgeId])
+  @@index([participationId])
+  @@index([championshipId])
+  @@index([categoryId])
+  @@index([organizationId])
+}
+
+model Result {
+  id              String   @id @default(cuid())
+  categoryId      String
+  participationId String
+  organizationId  String
+  finalPosition   Int
+  totalScore      Decimal  @db.Decimal(10, 2)
+  tieBreaker      Boolean  @default(false)
+  tieBreakOrder   Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization  Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  category      Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  participation Participation @relation(fields: [participationId], references: [id], onDelete: Restrict)
+
+  @@unique([categoryId, participationId])
+  @@index([categoryId])
+  @@index([organizationId])
+}
+
+model CategoryResult {
+  id                 String    @id @default(cuid())
+  championshipId     String
+  categoryId         String
+  organizationId     String
+  generatedById      String
+  generatedAt        DateTime  @default(now())
+  isOfficial         Boolean   @default(true)
+  invalidatedAt      DateTime?
+  invalidatedById    String?
+  invalidationReason String?
+  resultData         Json
+
+  organization  Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  championship  Championship @relation(fields: [championshipId], references: [id], onDelete: Restrict)
+  category      Category     @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  generatedBy   User         @relation("CategoryResultGeneratedBy", fields: [generatedById], references: [id], onDelete: Restrict)
+  invalidatedBy User?        @relation("CategoryResultInvalidatedBy", fields: [invalidatedById], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([championshipId, categoryId])
+  @@index([organizationId, championshipId, categoryId, isOfficial])
+  @@index([generatedById])
+  @@index([invalidatedById])
+  @@index([generatedAt])
+}
+
+model AuditLog {
+  id             String    @id @default(cuid())
+  action         String
+  entityType     String
+  entityId       String
+  userId         String
+  role           UserRole?
+  organizationId String?
+  details        String?
+  ipAddress      String?
+  timestamp      DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+
+  organization Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([role])
+  @@index([organizationId])
+  @@index([timestamp])
+  @@index([createdAt])
+}
