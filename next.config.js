@@ -2,19 +2,27 @@ const path = require('path');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  distDir: process.env.NEXT_DIST_DIR || '.next',
+  // ❌ REMOVIDO distDir custom (pode quebrar build na Vercel)
+
   output: process.env.NEXT_OUTPUT_MODE,
   productionBrowserSourceMaps: false,
+
   experimental: {
-    outputFileTracingRoot: path.join(__dirname, '../'),
+    outputFileTracingRoot: path.join(__dirname),
   },
+
   eslint: {
     ignoreDuringBuilds: true,
   },
+
   typescript: {
     ignoreBuildErrors: false,
   },
-  images: { unoptimized: true },
+
+  images: {
+    unoptimized: true,
+  },
+
   webpack: (config, { isServer }) => {
     if (!isServer) {
       config.output.filename = 'static/chunks/[name]-[contenthash:8].js';
