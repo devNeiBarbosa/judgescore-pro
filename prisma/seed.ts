@@ -10,6 +10,7 @@ const PASSWORD_ROUNDS = 10;
 
 async function ensureSuperAdmin() {
   const targetEmail = SUPER_ADMIN_EMAIL.toLowerCase();
+  const passwordHash = await bcrypt.hash(SUPER_ADMIN_PASSWORD, PASSWORD_ROUNDS);
 
   const existingSuperAdmin = await prisma.user.findUnique({
     where: { email: targetEmail },
@@ -17,11 +18,19 @@ async function ensureSuperAdmin() {
   });
 
   if (existingSuperAdmin) {
-    console.log(`[seed] SUPER_ADMIN já existe (${targetEmail}) - ignorando criação.`);
+    await prisma.user.update({
+      where: { email: targetEmail },
+      data: {
+        name: SUPER_ADMIN_NAME,
+        password: passwordHash,
+        role: 'SUPER_ADMIN',
+        mustChangePassword: true,
+      },
+    });
+
+    console.log(`[seed] SUPER_ADMIN já existia e foi atualizado (${targetEmail}).`);
     return;
   }
-
-  const passwordHash = await bcrypt.hash(SUPER_ADMIN_PASSWORD, PASSWORD_ROUNDS);
 
   await prisma.user.create({
     data: {
