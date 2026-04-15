@@ -82,6 +82,7 @@ const LinkBtn = styled.span`
   color: ${({ theme }) => theme?.colors?.gold ?? '#FFD700'};
   cursor: pointer;
   font-weight: 600;
+
   &:hover {
     text-decoration: underline;
   }
@@ -104,12 +105,14 @@ const TogglePassword = styled.button`
 export default function LoginPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
 
+  // redirecionamento se já logado
   if (status === 'authenticated') {
     if (typeof window !== 'undefined') {
       if (session?.user?.mustChangePassword) {
@@ -150,11 +153,18 @@ export default function LoginPage() {
       <FormCard>
         <Card padding="40px">
           <LogoBlock onClick={() => router.push('/')}>
-            <Logo variant="primary-dark" vertical height={100} />
+            {/* ✅ CORRETO (NOVO PADRÃO) */}
+            <Logo type="vertical" variant="dark" height={100} />
           </LogoBlock>
+
           <Title>BEM-VINDO DE VOLTA</Title>
-          <Subtitle>Entre na sua conta do JUDGESCORE PRO para continuar</Subtitle>
+
+          <Subtitle>
+            Entre na sua conta do JUDGESCORE PRO para continuar
+          </Subtitle>
+
           {error && <ErrorMsg>{error}</ErrorMsg>}
+
           <Form onSubmit={handleSubmit}>
             <Input
               label="Email"
@@ -162,9 +172,12 @@ export default function LoginPage() {
               placeholder="seu@email.com"
               icon={<Mail size={18} />}
               value={email}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e?.target?.value ?? '')}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setEmail(e.target.value)
+              }
               required
             />
+
             <PasswordField>
               <Input
                 label="Senha"
@@ -172,20 +185,30 @@ export default function LoginPage() {
                 placeholder="Sua senha"
                 icon={<Lock size={18} />}
                 value={password}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e?.target?.value ?? '')}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setPassword(e.target.value)
+                }
                 required
               />
-              <TogglePassword type="button" onClick={() => setShowPass(!showPass)}>
+
+              <TogglePassword
+                type="button"
+                onClick={() => setShowPass(!showPass)}
+              >
                 {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
               </TogglePassword>
             </PasswordField>
+
             <Button type="submit" fullWidth isLoading={loading} size="lg">
               Entrar
             </Button>
           </Form>
+
           <LinkText>
             Não tem uma conta?{' '}
-            <LinkBtn onClick={() => router.push('/registro')}>Cadastre-se</LinkBtn>
+            <LinkBtn onClick={() => router.push('/registro')}>
+              Cadastre-se
+            </LinkBtn>
           </LinkText>
         </Card>
       </FormCard>

@@ -34,7 +34,11 @@ const HeroSection = styled.section`
     transform: translateX(-50%);
     width: 600px;
     height: 600px;
-    background: radial-gradient(circle, ${({ theme }) => theme?.colors?.gold ?? '#FFD700'}08 0%, transparent 60%);
+    background: radial-gradient(
+      circle,
+      ${({ theme }) => theme?.colors?.gold ?? '#FFD700'}08 0%,
+      transparent 60%
+    );
     pointer-events: none;
   }
 `;
@@ -156,12 +160,36 @@ const CTACard = styled.div`
 `;
 
 const features = [
-  { icon: Zap, title: 'Campeonatos', desc: 'Gerencie eventos com eficiência total.' },
-  { icon: Users, title: 'Inscrições', desc: 'Controle completo de atletas.' },
-  { icon: Shield, title: 'Julgamento', desc: 'Sistema profissional de avaliação.' },
-  { icon: BarChart3, title: 'Resultados', desc: 'Pontuação automática em tempo real.' },
-  { icon: Award, title: 'Categorias', desc: 'Organização flexível de categorias.' },
-  { icon: Dumbbell, title: 'Atletas', desc: 'Área exclusiva para competidores.' },
+  {
+    icon: Zap,
+    title: 'Campeonatos',
+    desc: 'Gerencie eventos com eficiência total.',
+  },
+  {
+    icon: Users,
+    title: 'Inscrições',
+    desc: 'Controle completo de atletas.',
+  },
+  {
+    icon: Shield,
+    title: 'Julgamento',
+    desc: 'Sistema profissional de avaliação.',
+  },
+  {
+    icon: BarChart3,
+    title: 'Resultados',
+    desc: 'Pontuação automática em tempo real.',
+  },
+  {
+    icon: Award,
+    title: 'Categorias',
+    desc: 'Organização flexível de categorias.',
+  },
+  {
+    icon: Dumbbell,
+    title: 'Atletas',
+    desc: 'Área exclusiva para competidores.',
+  },
 ];
 
 export default function LandingPage() {
@@ -181,26 +209,37 @@ export default function LandingPage() {
       <HeroSection>
         <Container>
           <HeroLogoWrap>
-            {/* ✅ CORRETO */}
             <Logo type="vertical" height={140} />
           </HeroLogoWrap>
 
           <HeroTitle>
-            GESTÃO <GoldText>PROFISSIONAL</GoldText><br />
+            GESTÃO <GoldText>PROFISSIONAL</GoldText>
+            <br />
             DE CAMPEONATOS
           </HeroTitle>
 
           <HeroSubtitle>
-            Plataforma completa para organizar, julgar e divulgar resultados com precisão.
+            Plataforma completa para organizar, julgar e divulgar resultados com
+            precisão.
           </HeroSubtitle>
 
           <HeroButtons>
-            <Button size="lg" onClick={handleCTA} icon={<ArrowRight size={18} />}>
-              {status === 'authenticated' ? 'Ir para Dashboard' : 'Começar Agora'}
+            <Button
+              size="lg"
+              onClick={handleCTA}
+              icon={<ArrowRight size={18} />}
+            >
+              {status === 'authenticated'
+                ? 'Ir para Dashboard'
+                : 'Começar Agora'}
             </Button>
 
             {status !== 'authenticated' && (
-              <Button variant="outline" size="lg" onClick={() => router.push('/login')}>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => router.push('/login')}
+              >
                 Já tenho conta
               </Button>
             )}
@@ -210,8 +249,12 @@ export default function LandingPage() {
 
       <FeaturesSection>
         <Container>
-          <SectionTitle>TUDO EM UM <GoldText>LUGAR</GoldText></SectionTitle>
-          <SectionSubtitle>Ferramentas reais para eventos reais</SectionSubtitle>
+          <SectionTitle>
+            TUDO EM UM <GoldText>LUGAR</GoldText>
+          </SectionTitle>
+          <SectionSubtitle>
+            Ferramentas reais para eventos reais
+          </SectionSubtitle>
 
           <Divider />
 
@@ -232,14 +275,20 @@ export default function LandingPage() {
       <CTASection>
         <Container>
           <CTACard>
-            <SectionTitle>PRONTO PARA O <GoldText>PALCO</GoldText>?</SectionTitle>
+            <SectionTitle>
+              PRONTO PARA O <GoldText>PALCO</GoldText>?
+            </SectionTitle>
 
-            <HeroSubtitle>
-              Crie sua conta e comece hoje.
-            </HeroSubtitle>
+            <HeroSubtitle>Crie sua conta e comece hoje.</HeroSubtitle>
 
-            <Button size="lg" onClick={handleCTA} icon={<ArrowRight size={18} />}>
-              {status === 'authenticated' ? 'Acessar Dashboard' : 'Criar Conta'}
+            <Button
+              size="lg"
+              onClick={handleCTA}
+              icon={<ArrowRight size={18} />}
+            >
+              {status === 'authenticated'
+                ? 'Acessar Dashboard'
+                : 'Criar Conta'}
             </Button>
           </CTACard>
         </Container>

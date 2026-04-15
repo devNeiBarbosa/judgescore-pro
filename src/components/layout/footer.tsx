@@ -37,7 +37,9 @@ export default function Footer() {
     <FooterWrapper>
       <Container>
         <FooterInner>
-          <Logo variant="transparent-light" height={32} />
+          {/* 🔥 CORRETO */}
+          <Logo type="primary" height={32} />
+
           <FooterText>
             Gestão profissional de campeonatos de fisiculturismo
           </FooterText>

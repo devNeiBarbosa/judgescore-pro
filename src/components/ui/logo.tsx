@@ -2,8 +2,7 @@
 
 import React from 'react';
 
-type LogoVariant = 'primary-dark' | 'primary-light';
-
+type LogoVariant = 'dark' | 'light';
 type LogoType = 'primary' | 'vertical' | 'icon';
 
 interface LogoProps {
@@ -14,26 +13,26 @@ interface LogoProps {
   alt?: string;
 }
 
-const LOGO_MAP = {
+const LOGO_MAP: Record<LogoType, Record<LogoVariant, string>> = {
   primary: {
-    'primary-dark': '/assets/logo/logo-primary-dark.png',
-    'primary-light': '/assets/logo/logo-primary-light.png',
+    dark: '/assets/logo/logo-primary-dark.png',
+    light: '/assets/logo/logo-primary-light.jpg',
   },
   vertical: {
-    'primary-dark': '/assets/logo/logo-vertical-dark.png',
-    'primary-light': '/assets/logo/logo-vertical-light.png',
+    dark: '/assets/logo/logo-vertical-dark.png',
+    light: '/assets/logo/logo-vertical-dark.png',
   },
   icon: {
-    'primary-dark': '/assets/logo/icon-symbol.png',
-    'primary-light': '/assets/logo/icon-symbol.png',
+    dark: '/assets/logo/icon-symbol.png',
+    light: '/assets/logo/icon-symbol.png',
   },
 };
 
 export default function Logo({
-  variant = 'primary-dark',
+  variant = 'dark',
   type = 'primary',
   height = 40,
-  className,
+  className = '',
   alt = 'JUDGESCORE PRO',
 }: LogoProps) {
   const src = LOGO_MAP[type][variant];
