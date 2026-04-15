@@ -154,7 +154,7 @@ export default function LoginPage() {
         <Card padding="40px">
           <LogoBlock onClick={() => router.push('/')}>
             {/* ✅ CORRETO (NOVO PADRÃO) */}
-            <Logo type="vertical" variant="dark" height={100} />
+            <Logo type="vertical" variant="dark" height={120} />
           </LogoBlock>
 
           <Title>BEM-VINDO DE VOLTA</Title>

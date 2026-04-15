@@ -38,7 +38,7 @@ export default function Footer() {
       <Container>
         <FooterInner>
           {/* 🔥 CORRETO */}
-          <Logo type="primary" height={32} />
+          <Logo type="primary" height={42} />
 
           <FooterText>
             Gestão profissional de campeonatos de fisiculturismo

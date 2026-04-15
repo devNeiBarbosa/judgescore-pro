@@ -314,7 +314,7 @@ export default function RegisterPage() {
       <FormCard>
         <Card padding="40px">
           <LogoBlock onClick={() => router.push('/')}>
-            <Logo type="vertical" variant="dark" height={96} />
+            <Logo type="vertical" variant="dark" height={120} />
           </LogoBlock>
 
           <Title>

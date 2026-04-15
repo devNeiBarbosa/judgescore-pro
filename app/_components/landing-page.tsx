@@ -209,7 +209,7 @@ export default function LandingPage() {
       <HeroSection>
         <Container>
           <HeroLogoWrap>
-            <Logo type="vertical" height={140} />
+            <Logo type="vertical" height={160} />
           </HeroLogoWrap>
 
           <HeroTitle>

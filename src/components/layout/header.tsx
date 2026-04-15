@@ -21,7 +21,7 @@ const HeaderInner = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 68px;
+  height: 80px;
 `;
 
 const LogoLink = styled.div`
@@ -117,7 +117,7 @@ export default function Header() {
         <HeaderInner>
           <LogoLink onClick={() => handleNav('/')}>
             {/* 🔥 CORRETO */}
-            <Logo type="primary" height={36} />
+            <Logo type="primary" height={46} />
           </LogoLink>
 
           <MenuToggle onClick={() => setMenuOpen(!menuOpen)}>
