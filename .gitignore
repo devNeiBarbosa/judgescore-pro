@@ -1,1 +1,16 @@
 node_modules
+.next
+out
+dist
+build
+coverage
+
+BASELINE_APROVADO.md
+BASELINE_APROVADO_*.md
+FASE*_COMPLETO.md
+SUPER_ADMIN_ESTRUTURA_*.md
+PRODUCTION_AUDIT.*
+STYLE_GUIDE.md
+BRANDING.md
+.abacus.donotdelete
+*.pdf
