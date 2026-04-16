@@ -11,7 +11,8 @@ import {
   isValidInstagram,
   validateCPF,
 } from '@/lib/validation';
-import type { Invitation } from '@prisma/client';
+import type { Invitation, Prisma } from '@prisma/client';
+import { slugify } from '@/lib/utils';
 
 const signupAttempts = new Map<string, { count: number; firstAttempt: number }>();
 const SIGNUP_MAX = 5;
@@ -98,6 +99,35 @@ async function auditInvalidSignupAttempt(params: {
     // non-blocking
   }
 }
+async function generateUniqueOrganizationSlug(
+  tx: Prisma.TransactionClient,
+  organizationName: string
+): Promise<string> {
+  const baseSlug = slugify(organizationName) || 'organizacao';
+
+  const existingSlugs = await tx.organization.findMany({
+    where: {
+      slug: {
+        startsWith: baseSlug,
+      },
+    },
+    select: { slug: true },
+  });
+
+  const usedSlugs = new Set(existingSlugs.map((row) => row.slug));
+  if (!usedSlugs.has(baseSlug)) {
+    return baseSlug;
+  }
+
+  let suffix = 2;
+  let candidate = `${baseSlug}-${suffix}`;
+  while (usedSlugs.has(candidate)) {
+    suffix += 1;
+    candidate = `${baseSlug}-${suffix}`;
+  }
+
+  return candidate;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -128,14 +158,14 @@ export async function POST(request: NextRequest) {
         token: inviteToken || undefined,
       });
       return NextResponse.json(
-        { error: 'Cadastro permitido apenas via token de convite válido.' },
+        { error: 'Campos organizationId/organizationSlug/slug não são permitidos no cadastro.' },
         { status: 400 }
       );
     }
 
-    if (!rawName || !rawEmail || !rawPassword || !inviteToken) {
+    if (!rawName || !rawEmail || !rawPassword) {
       return NextResponse.json(
-        { error: 'Nome, email, senha e token de convite são obrigatórios' },
+        { error: 'Nome, email e senha são obrigatórios' },
         { status: 400 }
       );
     }
@@ -184,6 +214,76 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Instagram inválido. Use o formato @usuario' },
         { status: 400 }
+      );
+    }
+
+    if (!inviteToken) {
+      const [existingEmail, existingCpf] = await Promise.all([
+        prisma.user.findUnique({ where: { email: rawEmail }, select: { id: true } }),
+        rawCpf
+          ? prisma.user.findUnique({ where: { cpf: rawCpf }, select: { id: true } })
+          : Promise.resolve(null),
+      ]);
+
+      if (existingEmail || existingCpf) {
+        return NextResponse.json(
+          { error: 'Não foi possível completar o cadastro. Verifique seus dados ou tente fazer login.' },
+          { status: 409 }
+        );
+      }
+
+      const hashedPassword = await bcrypt.hash(rawPassword, 12);
+
+      const { user } = await prisma.$transaction(async (tx) => {
+        const orgSlug = await generateUniqueOrganizationSlug(tx, rawName);
+
+        const organization = await tx.organization.create({
+          data: {
+            name: rawName,
+            slug: orgSlug,
+          },
+        });
+
+        const createdUser = await tx.user.create({
+          data: {
+            email: rawEmail,
+            password: hashedPassword,
+            name: rawName,
+            cpf: rawCpf || null,
+            phone: rawPhone || null,
+            birthDate: rawBirthDate ? new Date(rawBirthDate) : null,
+            instagram: rawInstagram || null,
+            role: 'ADMIN',
+            organizationId: organization.id,
+          },
+        });
+
+        await tx.organizationMember.create({
+          data: {
+            organizationId: organization.id,
+            userId: createdUser.id,
+            role: 'ADMIN',
+          },
+        });
+
+        await tx.auditLog.create({
+          data: {
+            action: 'USER_SIGNUP',
+            entityType: 'User',
+            entityId: createdUser.id,
+            userId: createdUser.id,
+            organizationId: organization.id,
+            ipAddress: ip,
+            details: JSON.stringify({ role: 'ADMIN', source: 'direct_signup_bootstrap' }),
+          },
+        });
+
+        return { user: createdUser };
+      });
+
+      return NextResponse.json(
+        { user: { id: user.id, name: user.name, role: user.role, organizationId: user.organizationId } },
+        { status: 201 }
       );
     }
 

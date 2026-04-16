@@ -4,12 +4,13 @@ import React, { useEffect, useState, useCallback } from 'react';
 import styled from 'styled-components';
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, Plus, Tag, UserCheck, Trash2, Save, Calendar, MapPin, Info, ClipboardList, Scale, Download, RotateCcw, Trophy } from 'lucide-react';
+import { ArrowLeft, Plus, Tag, UserCheck, Trash2, Save, Calendar, MapPin, Info, ClipboardList, Scale, Download, RotateCcw, Trophy, Package } from 'lucide-react';
 import MainLayout from '@/src/components/layout/main-layout';
 import Container from '@/src/components/ui/container';
 import Card from '@/src/components/ui/card';
 import Button from '@/src/components/ui/button';
 import Input from '@/src/components/ui/input';
+import ChampionshipItemsList from '@/src/components/championship-items/ChampionshipItemsList';
 import { STATUS_LABELS, ROLE_LABELS } from '@/lib/types';
 
 /* ─── Styled ─── */
@@ -384,7 +385,7 @@ export default function ChampDetailPage() {
   const [categoryActionLoadingId, setCategoryActionLoadingId] = useState('');
   const fetchChamp = useCallback(async () => {
     try {
-      const res = await fetch(`/api/admin/championships/${champId}`);
+      const res = await fetch(`/api/admin/championships/${champId}`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setChamp(data.championship);
@@ -396,7 +397,7 @@ export default function ChampDetailPage() {
 
   const fetchReferees = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/users');
+      const res = await fetch('/api/admin/users', { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         const refs = (data.users ?? []).filter((u: AvailableReferee) => u.role === 'ARBITRO_AUXILIAR' || u.role === 'ARBITRO_CENTRAL');
@@ -407,7 +408,7 @@ export default function ChampDetailPage() {
 
   const fetchInscriptions = useCallback(async () => {
     try {
-      const res = await fetch(`/api/admin/championships/${champId}/inscriptions`);
+      const res = await fetch(`/api/admin/championships/${champId}/inscriptions`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setInscriptions(data.inscriptions ?? []);
@@ -437,6 +438,7 @@ export default function ChampDetailPage() {
     setCatSaving(true);
     try {
       const res = await fetch(`/api/admin/championships/${champId}/categories`, {
+  credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(catForm),
@@ -456,6 +458,7 @@ export default function ChampDetailPage() {
     setRefSaving(true);
     try {
       const res = await fetch(`/api/admin/championships/${champId}/referees`, {
+  credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refereeId: selectedRef }),
@@ -473,6 +476,7 @@ export default function ChampDetailPage() {
     if (!confirm('Remover este árbitro do campeonato?')) return;
     try {
       const res = await fetch(`/api/admin/championships/${champId}/referees`, {
+  credentials: 'include',
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refereeId }),
@@ -490,6 +494,7 @@ export default function ChampDetailPage() {
     setStatusSaving(true);
     try {
       const res = await fetch(`/api/admin/championships/${champId}`, {
+  credentials: 'include',
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: statusVal }),
@@ -504,7 +509,8 @@ export default function ChampDetailPage() {
     setCategoryActionError('');
     setCategoryActionLoadingId(`finalize-${categoryId}`);
     try {
-      const res = await fetch(`/api/admin/championships/${champId}/categories/${categoryId}/finalize`, { method: 'POST' });
+      const res = await fetch(`/api/admin/championships/${champId}/categories/${categoryId}/finalize`, {
+  credentials: 'include', method: 'POST' });
       const data = await res.json();
       if (!res.ok) {
         setCategoryActionError(data.error ?? 'Erro ao gerar resultado oficial');
@@ -523,7 +529,7 @@ export default function ChampDetailPage() {
     setCategoryActionError('');
     setCategoryActionLoadingId(`pdf-${categoryId}`);
     try {
-      const res = await fetch(`/api/admin/championships/${champId}/categories/${categoryId}/result-pdf`);
+      const res = await fetch(`/api/admin/championships/${champId}/categories/${categoryId}/result-pdf`, { credentials: 'include' });
       if (!res.ok) {
         const data = await res.json();
         setCategoryActionError(data.error ?? 'Erro ao baixar PDF oficial');
@@ -559,6 +565,7 @@ export default function ChampDetailPage() {
     setCategoryActionLoadingId(`reopen-${categoryId}`);
     try {
       const res = await fetch(`/api/admin/championships/${champId}/categories/${categoryId}/reopen`, {
+  credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reason }),
@@ -709,6 +716,16 @@ export default function ChampDetailPage() {
 
         {(categoryActionError || categoryActionMessage) && (
           <InlineAlert $error={Boolean(categoryActionError)}>{categoryActionError || categoryActionMessage}</InlineAlert>
+        )}
+
+        {/* Championship items */}
+        {isAdminOrSuperAdmin && (
+          <>
+            <SectionRow>
+              <SectionTitle><Package size={18} /> ITENS</SectionTitle>
+            </SectionRow>
+            <ChampionshipItemsList championshipId={champId} />
+          </>
         )}
 
         {/* Referees */}

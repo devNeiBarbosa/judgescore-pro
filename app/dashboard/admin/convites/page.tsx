@@ -194,7 +194,7 @@ export default function ConvitesAdminPage() {
 
   const fetchInvitations = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/invitations');
+      const res = await fetch('/api/admin/invitations', { credentials: 'include' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(data?.error ?? 'Erro ao carregar convites');
@@ -237,6 +237,7 @@ export default function ConvitesAdminPage() {
 
     try {
       const res = await fetch('/api/admin/invitations', {
+  credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim(), role }),

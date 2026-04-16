@@ -178,8 +178,8 @@ export default function AthleteDashboardPage() {
 
     try {
       const [championshipsRes, inscriptionsRes] = await Promise.all([
-        fetch('/api/athlete/championships'),
-        fetch('/api/athlete/inscriptions'),
+        fetch('/api/athlete/championships', { credentials: 'include' }),
+        fetch('/api/athlete/inscriptions', { credentials: 'include' }),
       ]);
 
       if (!championshipsRes.ok || !inscriptionsRes.ok) {
@@ -245,6 +245,7 @@ export default function AthleteDashboardPage() {
 
     try {
       const res = await fetch('/api/athlete/inscriptions', {
+  credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

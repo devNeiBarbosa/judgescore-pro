@@ -78,6 +78,18 @@ enum SubscriptionStatus {
   CANCELLED
 }
 
+enum BillingPlanType {
+  MONTHLY
+  RECURRING
+  ANNUAL
+}
+
+enum BillingStatus {
+  ACTIVE
+  INACTIVE
+  EXPIRED
+}
+
 enum CategoryStatus {
   OPEN_FOR_JUDGING
   ALL_JUDGES_FINALIZED
@@ -86,29 +98,39 @@ enum CategoryStatus {
 }
 
 model Organization {
-  id                   String             @id @default(cuid())
-  name                 String
-  slug                 String             @unique
-  document             String?            @unique
-  email                String?
-  phone                String?
-  logoUrl              String?
-  planType             PlanType           @default(EVENTO)
-  licenseType          LicenseType        @default(PER_EVENT)
-  subscriptionStatus   SubscriptionStatus @default(INACTIVE)
-  isBrandingAllowed    Boolean            @default(false)
-  maintenanceRequired  Boolean            @default(false)
-  maxChampionships     Int                @default(1)
-  expiresAt            DateTime?
-  stripeCustomerId     String?
-  stripeSubscriptionId String?
-  isActive             Boolean            @default(true)
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
+  id                       String             @id @default(cuid())
+  name                     String
+  slug                     String             @unique
+  document                 String?            @unique
+  email                    String?
+  phone                    String?
+  logoUrl                  String?
+  planType                 PlanType           @default(EVENTO)
+  licenseType              LicenseType        @default(PER_EVENT)
+  subscriptionStatus       SubscriptionStatus @default(INACTIVE)
+  billingPlanType          BillingPlanType?
+  billingStatus            BillingStatus?
+  billingStartsAt          DateTime?
+  billingExpiresAt         DateTime?
+  championshipsUsedInCycle Int                @default(0)
+  externalPaymentEnabled   Boolean            @default(false)
+  externalPaymentUrl       String?
+  externalPaymentLabel     String?
+  brandingEnabled          Boolean            @default(false)
+  isBrandingAllowed        Boolean            @default(false)
+  maintenanceRequired      Boolean            @default(false)
+  maxChampionships         Int                @default(1)
+  expiresAt                DateTime?
+  stripeCustomerId         String?
+  stripeSubscriptionId     String?
+  isActive                 Boolean            @default(true)
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
 
   users                 User[]
   members               OrganizationMember[]
   championships         Championship[]
+  championshipItems     ChampionshipItem[]
   championshipReferees  ChampionshipReferee[]
   categories            Category[]
   participations        Participation[]
@@ -163,19 +185,19 @@ model Invitation {
 }
 
 model User {
-  id             String    @id @default(cuid())
-  email          String    @unique
-  password       String
-  name           String
-  cpf            String?   @unique
-  phone          String?
-  birthDate      DateTime?
-  instagram      String?
+  id                 String    @id @default(cuid())
+  email              String    @unique
+  password           String
+  name               String
+  cpf                String?   @unique
+  phone              String?
+  birthDate          DateTime?
+  instagram          String?
   role               UserRole  @default(ATLETA)
   organizationId     String?
   mustChangePassword Boolean   @default(false)
   createdAt          DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  updatedAt          DateTime  @updatedAt
 
   organization               Organization?         @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   participations             Participation[]
@@ -217,11 +239,31 @@ model Championship {
   products        Product[]
   combos          Combo[]
   orders          Order[]
+  items           ChampionshipItem[]
   referees        ChampionshipReferee[]
 
   @@unique([organizationId, slug])
   @@index([status])
   @@index([slug])
+  @@index([organizationId])
+}
+
+model ChampionshipItem {
+  id             String   @id @default(cuid())
+  championshipId String
+  organizationId String
+  name           String
+  priceInCents   Int
+  description    String?
+  imageUrl       String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  championship Championship @relation(fields: [championshipId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([championshipId])
   @@index([organizationId])
 }
 

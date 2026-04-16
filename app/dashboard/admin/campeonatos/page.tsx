@@ -251,7 +251,7 @@ export default function CampeonatosPage() {
 
   const fetchChamps = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/championships');
+      const res = await fetch('/api/admin/championships', { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setChamps(data.championships ?? []);
@@ -277,6 +277,7 @@ export default function CampeonatosPage() {
     setSaving(true);
     try {
       const res = await fetch('/api/admin/championships', {
+  credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),

@@ -230,7 +230,7 @@ export default function UsuariosPage() {
 
   const fetchUsers = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/users');
+      const res = await fetch('/api/admin/users', { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setUsers(data.users ?? []);
@@ -256,6 +256,7 @@ export default function UsuariosPage() {
     setSaving(true);
     try {
       const res = await fetch('/api/admin/users', {
+  credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),

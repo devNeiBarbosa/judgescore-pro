@@ -187,8 +187,8 @@ export default function ChampionshipCheckinPage() {
   const fetchBase = useCallback(async () => {
     try {
       const [champRes, catRes] = await Promise.all([
-        fetch(`/api/admin/championships/${championshipId}`),
-        fetch(`/api/admin/championships/${championshipId}/categories`),
+        fetch(`/api/admin/championships/${championshipId}`, { credentials: 'include' }),
+        fetch(`/api/admin/championships/${championshipId}/categories`, { credentials: 'include' }),
       ]);
       if (champRes.ok) {
         const data = await champRes.json();
@@ -206,7 +206,7 @@ export default function ChampionshipCheckinPage() {
   const fetchDoneList = useCallback(async () => {
     setLoadingDone(true);
     try {
-      const res = await fetch(`/api/admin/championships/${championshipId}/inscriptions`);
+      const res = await fetch(`/api/admin/championships/${championshipId}/inscriptions`, { credentials: 'include' });
       if (!res.ok) return;
       const data = await res.json();
       const done = (data.inscriptions ?? []).filter((item: ListInscription) => item.status === 'CHECKIN_DONE');
@@ -219,7 +219,7 @@ export default function ChampionshipCheckinPage() {
 
   const loadDetail = useCallback(async (id: string) => {
     try {
-      const res = await fetch(`/api/admin/inscriptions/${id}`);
+      const res = await fetch(`/api/admin/inscriptions/${id}`, { credentials: 'include' });
       if (!res.ok) return;
       const data = await res.json();
       const inscription = data.inscription as InscriptionDetail;
@@ -253,7 +253,7 @@ export default function ChampionshipCheckinPage() {
 
     setSearchLoading(true);
     try {
-      const res = await fetch(`/api/admin/championships/${championshipId}/inscriptions/search?q=${encodeURIComponent(query)}`);
+      const res = await fetch(`/api/admin/championships/${championshipId}/inscriptions/search?q=${encodeURIComponent(query)}`, { credentials: 'include' });
       const data = await res.json();
       if (!res.ok) {
         setError(data.error ?? 'Erro ao buscar inscrições');
@@ -308,6 +308,7 @@ export default function ChampionshipCheckinPage() {
     setSaving(true);
     try {
       const res = await fetch(`/api/admin/inscriptions/${detail.id}/${isEdit ? 'edit' : 'checkin'}`, {
+  credentials: 'include',
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -58,7 +58,7 @@ export default function JudgeDashboardPage() {
   const fetchChampionships = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/judge/championships');
+      const res = await fetch('/api/judge/championships', { credentials: 'include' });
       const data = await res.json();
       if (res.ok) {
         setChampionships(data.championships ?? []);

@@ -63,6 +63,7 @@ export default function FirstAccessPage() {
     setLoading(true);
     try {
       const response = await fetch('/api/auth/change-password', {
+  credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ currentPassword, newPassword }),

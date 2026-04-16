@@ -36,13 +36,44 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const requestedOrganizationId = typeof body?.organizationId === 'string' ? body.organizationId.trim() : '';
-    const organizationId = auth.actingOrganizationId ?? (auth.isSuperAdmin ? requestedOrganizationId : null);
+
+    if (auth.isSuperAdmin && !auth.actingOrganizationId) {
+      return NextResponse.json(
+        { error: 'SUPER_ADMIN precisa selecionar uma organização via impersonação antes de criar campeonato' },
+        { status: 400 },
+      );
+    }
+
+    const organizationId = auth.actingOrganizationId;
 
     if (!organizationId) {
+      return NextResponse.json({ error: 'Usuário sem organização vinculada para criar campeonato' }, { status: 403 });
+    }
+
+    const organization = (await prisma.organization.findUnique({
+      where: { id: organizationId },
+    })) as any;
+
+    if (!organization) {
+      return NextResponse.json({ error: 'Organização não encontrada' }, { status: 404 });
+    }
+
+    if (organization.billingStatus !== 'ACTIVE') {
       return NextResponse.json(
-        { error: 'Selecione uma organização para criar campeonato' },
-        { status: 400 },
+        {
+          error:
+            'Seu plano expirou ou está inativo. Você ainda pode acessar resultados antigos, PDFs e auditoria, mas não pode criar novos campeonatos.',
+        },
+        { status: 403 },
+      );
+    }
+
+    if (organization.billingPlanType === 'MONTHLY' && organization.championshipsUsedInCycle >= 2) {
+      return NextResponse.json(
+        {
+          error: 'Você atingiu o limite mensal de 2 campeonatos. Cancele um existente ou atualize seu plano.',
+        },
+        { status: 403 },
       );
     }
 
@@ -102,8 +133,8 @@ export async function POST(request: NextRequest) {
         {
           name,
           slug,
-          crossOrganization: !auth.actingOrganizationId,
-          requestedOrganizationId,
+          actingOrganizationId: auth.actingOrganizationId,
+          isImpersonating: auth.isImpersonating,
         },
       );
     }

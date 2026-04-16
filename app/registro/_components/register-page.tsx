@@ -218,11 +218,6 @@ export default function RegisterPage() {
     e.preventDefault();
     setError('');
 
-    if (!inviteToken) {
-      setError('Este cadastro exige um token de convite válido.');
-      return;
-    }
-
     const pwResult = validatePassword(formData.password ?? '');
     if (!pwResult.valid) {
       setError(pwResult.errors[0]);
@@ -244,6 +239,7 @@ export default function RegisterPage() {
 
     try {
       const res = await fetch('/api/signup', {
+  credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -254,7 +250,7 @@ export default function RegisterPage() {
           phone: (formData.phone ?? '').replace(/\D/g, '') || undefined,
           birthDate: formData.birthDate || undefined,
           instagram: formData.instagram || undefined,
-          token: inviteToken,
+          token: inviteToken || undefined,
         }),
       });
 
@@ -321,13 +317,17 @@ export default function RegisterPage() {
             CRIAR <GoldText>CONTA</GoldText>
           </Title>
 
-          <Subtitle>Cadastro permitido apenas com convite</Subtitle>
-
-          <InviteInfo $valid={Boolean(inviteToken)}>
+          <Subtitle>
             {inviteToken
-              ? 'Convite detectado. Complete seu cadastro.'
-              : 'Token de convite não encontrado nesta URL.'}
-          </InviteInfo>
+              ? 'Cadastro com convite detectado'
+              : 'Cadastro direto: sua organização será criada automaticamente'}
+          </Subtitle>
+
+          {inviteToken && (
+            <InviteInfo $valid>
+              Convite detectado. Complete seu cadastro.
+            </InviteInfo>
+          )}
 
           {error && <ErrorMsg>{error}</ErrorMsg>}
 

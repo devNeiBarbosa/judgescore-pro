@@ -31,6 +31,7 @@ export async function fetchApi<T = unknown>(
 
   const fetchOpts: RequestInit = {
     ...rest,
+    credentials: rest.credentials ?? 'include',
     headers: {
       'Content-Type': 'application/json',
       ...(rest.headers ?? {}),

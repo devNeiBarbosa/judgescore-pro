@@ -210,7 +210,7 @@ export default function DashboardPage() {
   const fetchStats = useCallback(async () => {
     if (!isAdmin) return;
     try {
-      const res = await fetch('/api/admin/stats');
+      const res = await fetch('/api/admin/stats', { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setRealStats(data.stats);

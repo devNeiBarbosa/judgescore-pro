@@ -69,7 +69,7 @@ export default function JudgeChampionshipCategoriesPage() {
   const loadCategories = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/judge/championships/${championshipId}/categories`);
+      const res = await fetch(`/api/judge/championships/${championshipId}/categories`, { credentials: 'include' });
       const data = await res.json();
       if (res.ok) setCategories(data.categories ?? []);
       else setCategories([]);

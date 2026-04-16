@@ -262,7 +262,7 @@ export default function JudgeCategoryPage() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/judge/championships/${championshipId}/categories/${categoryId}/participations`);
+      const res = await fetch(`/api/judge/championships/${championshipId}/categories/${categoryId}/participations`, { credentials: 'include' });
       const data = await res.json();
 
       if (!res.ok) {
@@ -347,6 +347,7 @@ export default function JudgeCategoryPage() {
 
     try {
       const res = await fetch('/api/judge/judgments', {
+  credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -471,6 +472,7 @@ export default function JudgeCategoryPage() {
 
     try {
       const res = await fetch(`/api/judge/championships/${championshipId}/categories/${categoryId}/finalize`, {
+  credentials: 'include',
         method: 'POST',
       });
       const data = await res.json();

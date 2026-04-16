@@ -2,23 +2,15 @@
 
 import React from 'react';
 import styled from 'styled-components';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import {
-  Shield,
-  Users,
-  BarChart3,
-  Award,
-  ArrowRight,
-  Dumbbell,
-  Zap,
-} from 'lucide-react';
+import { Shield, Users, BarChart3, Award, Dumbbell, Zap } from 'lucide-react';
 
 import MainLayout from '@/src/components/layout/main-layout';
 import Container from '@/src/components/ui/container';
 import Card from '@/src/components/ui/card';
 import Button from '@/src/components/ui/button';
 import Logo from '@/src/components/ui/logo';
+import PricingPlans from '@/src/components/PricingPlans';
 
 const HeroSection = styled.section`
   position: relative;
@@ -78,6 +70,16 @@ const HeroButtons = styled.div`
   gap: 16px;
   justify-content: center;
   flex-wrap: wrap;
+
+  & > button {
+    min-width: 170px;
+  }
+
+  @media (max-width: 639px) {
+    & > button {
+      width: 100%;
+    }
+  }
 `;
 
 const Divider = styled.div`
@@ -193,16 +195,7 @@ const features = [
 ];
 
 export default function LandingPage() {
-  const { status } = useSession();
   const router = useRouter();
-
-  const handleCTA = () => {
-    if (status === 'authenticated') {
-      router.push('/dashboard');
-    } else {
-      router.push('/registro');
-    }
-  };
 
   return (
     <MainLayout>
@@ -213,36 +206,21 @@ export default function LandingPage() {
           </HeroLogoWrap>
 
           <HeroTitle>
-            GESTÃO <GoldText>PROFISSIONAL</GoldText>
-            <br />
-            DE CAMPEONATOS
+            JUDGESCORE <GoldText>PRO</GoldText>
           </HeroTitle>
 
           <HeroSubtitle>
-            Plataforma completa para organizar, julgar e divulgar resultados com
-            precisão.
+            Plataforma completa para gerenciamento de eventos de fisiculturismo,
+            campeonatos e arbitragem.
           </HeroSubtitle>
 
           <HeroButtons>
-            <Button
-              size="lg"
-              onClick={handleCTA}
-              icon={<ArrowRight size={18} />}
-            >
-              {status === 'authenticated'
-                ? 'Ir para Dashboard'
-                : 'Começar Agora'}
+            <Button size="lg" onClick={() => router.push('/registro')}>
+              Criar conta
             </Button>
-
-            {status !== 'authenticated' && (
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={() => router.push('/login')}
-              >
-                Já tenho conta
-              </Button>
-            )}
+            <Button variant="outline" size="lg" onClick={() => router.push('/login')}>
+              Entrar
+            </Button>
           </HeroButtons>
         </Container>
       </HeroSection>
@@ -272,6 +250,8 @@ export default function LandingPage() {
         </Container>
       </FeaturesSection>
 
+      <PricingPlans />
+
       <CTASection>
         <Container>
           <CTACard>
@@ -279,17 +259,23 @@ export default function LandingPage() {
               PRONTO PARA O <GoldText>PALCO</GoldText>?
             </SectionTitle>
 
-            <HeroSubtitle>Crie sua conta e comece hoje.</HeroSubtitle>
+            <HeroSubtitle>
+              Crie sua conta para começar a organizar seus campeonatos de
+              fisiculturismo.
+            </HeroSubtitle>
 
-            <Button
-              size="lg"
-              onClick={handleCTA}
-              icon={<ArrowRight size={18} />}
-            >
-              {status === 'authenticated'
-                ? 'Acessar Dashboard'
-                : 'Criar Conta'}
-            </Button>
+            <HeroButtons>
+              <Button size="lg" onClick={() => router.push('/registro')}>
+                Criar conta
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => router.push('/login')}
+              >
+                Entrar
+              </Button>
+            </HeroButtons>
           </CTACard>
         </Container>
       </CTASection>

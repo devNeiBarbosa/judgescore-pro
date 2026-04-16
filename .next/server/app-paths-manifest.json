@@ -1,0 +1,11 @@
+{
+  "/dashboard/admin/campeonatos/page": "app/dashboard/admin/campeonatos/page.js",
+  "/dashboard/admin/championships/[id]/page": "app/dashboard/admin/championships/[id]/page.js",
+  "/dashboard/admin/page": "app/dashboard/admin/page.js",
+  "/super-admin/page": "app/super-admin/page.js",
+  "/page": "app/page.js",
+  "/dashboard/admin/usuarios/page": "app/dashboard/admin/usuarios/page.js",
+  "/login/page": "app/login/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/api/admin/stats/route": "app/api/admin/stats/route.js"
+}
