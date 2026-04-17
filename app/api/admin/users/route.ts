@@ -48,8 +48,7 @@ export async function POST(request: NextRequest) {
     const email = (body?.email ?? '').trim().toLowerCase();
     const role = body?.role;
     const password = body?.password ?? '';
-    const requestedOrganizationId = typeof body?.organizationId === 'string' ? body.organizationId.trim() : '';
-    const organizationId = auth.actingOrganizationId ?? (auth.isSuperAdmin ? requestedOrganizationId : null);
+    const organizationId = auth.actingOrganizationId;
 
     if (!organizationId) {
       return NextResponse.json({ error: 'Selecione uma organização antes de criar usuários' }, { status: 400 });
@@ -116,7 +115,6 @@ export async function POST(request: NextRequest) {
           createdUserRole: user.role,
           createdUserEmail: user.email,
           crossOrganization: !auth.actingOrganizationId,
-          requestedOrganizationId,
         },
       );
     }

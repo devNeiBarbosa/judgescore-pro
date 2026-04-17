@@ -12,7 +12,6 @@ import {
   Eye,
   EyeOff,
   Calendar,
-  Instagram,
 } from 'lucide-react';
 import Input from '@/src/components/ui/input';
 import Button from '@/src/components/ui/button';
@@ -183,7 +182,6 @@ export default function RegisterPage() {
     cpf: '',
     phone: '',
     birthDate: '',
-    instagram: '',
   });
 
   const [error, setError] = useState('');
@@ -205,10 +203,6 @@ export default function RegisterPage() {
         value = maskCPF(value);
       } else if (field === 'phone') {
         value = maskPhone(value);
-      } else if (field === 'instagram') {
-        if (value && !value.startsWith('@')) {
-          value = `@${value}`;
-        }
       }
 
       setFormData((prev) => ({ ...prev, [field]: value }));
@@ -249,7 +243,6 @@ export default function RegisterPage() {
           cpf: cpfClean || undefined,
           phone: (formData.phone ?? '').replace(/\D/g, '') || undefined,
           birthDate: formData.birthDate || undefined,
-          instagram: formData.instagram || undefined,
           token: inviteToken || undefined,
         }),
       });
@@ -377,14 +370,6 @@ export default function RegisterPage() {
                 icon={<Calendar size={18} />}
                 value={formData.birthDate ?? ''}
                 onChange={handleChange('birthDate')}
-              />
-
-              <Input
-                label="Instagram"
-                placeholder="@seuusuario"
-                icon={<Instagram size={18} />}
-                value={formData.instagram ?? ''}
-                onChange={handleChange('instagram')}
               />
             </Row>
 

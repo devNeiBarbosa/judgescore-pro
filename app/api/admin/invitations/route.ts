@@ -15,8 +15,7 @@ export async function GET(request: NextRequest) {
   if (isErrorResponse(auth)) return auth;
 
   try {
-    const queryOrganizationId = request.nextUrl.searchParams.get('organizationId')?.trim() ?? '';
-    const organizationId = auth.actingOrganizationId ?? (auth.isSuperAdmin ? queryOrganizationId : null);
+    const organizationId = auth.actingOrganizationId;
 
     if (!organizationId) {
       return NextResponse.json({ error: 'Selecione uma organização para listar convites' }, { status: 400 });
@@ -52,8 +51,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const email = (body?.email ?? '').trim().toLowerCase();
     const role = body?.role;
-    const requestedOrganizationId = typeof body?.organizationId === 'string' ? body.organizationId.trim() : '';
-    const organizationId = auth.actingOrganizationId ?? (auth.isSuperAdmin ? requestedOrganizationId : null);
+    const organizationId = auth.actingOrganizationId;
 
     if (!organizationId) {
       return NextResponse.json({ error: 'Selecione uma organização para criar convites' }, { status: 400 });
@@ -110,7 +108,6 @@ export async function POST(request: NextRequest) {
           invitedRole: invitation.role,
           expiresAt: invitation.expiresAt.toISOString(),
           crossOrganization: !auth.actingOrganizationId,
-          requestedOrganizationId,
         },
       );
     }

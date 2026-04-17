@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Users, Trophy, BarChart3, ChevronRight, MailPlus } from 'lucide-react';
+import { Users, Trophy, BarChart3, ChevronRight, MailPlus, Shield } from 'lucide-react';
 import MainLayout from '@/src/components/layout/main-layout';
 import Container from '@/src/components/ui/container';
 import Card from '@/src/components/ui/card';
@@ -141,7 +141,7 @@ interface OrganizationBilling {
   championshipsUsedInCycle: number;
 }
 
-const modules = [
+const baseModules = [
   { icon: Trophy, title: 'Campeonatos', desc: 'Criar e gerenciar campeonatos, categorias e árbitros', href: '/dashboard/admin/campeonatos' },
   { icon: Users, title: 'Usuários', desc: 'Gerenciar atletas, árbitros e administradores', href: '/dashboard/admin/usuarios' },
   { icon: MailPlus, title: 'Convites', desc: 'Criar e acompanhar convites de acesso por token', href: '/dashboard/admin/convites' },
@@ -227,6 +227,17 @@ export default function AdminHubPage() {
 
   const isCriticalBilling = billing?.billingStatus === 'EXPIRED' || billing?.billingStatus === 'INACTIVE';
 
+  const modules = session?.user?.role === 'SUPER_ADMIN'
+    ? [
+        ...baseModules,
+        {
+          icon: Shield,
+          title: 'Painel Super Admin',
+          desc: 'Gerenciar organizações e impersonação',
+          href: '/super-admin',
+        },
+      ]
+    : baseModules;
   return (
     <MainLayout>
       <Container>
@@ -279,3 +290,4 @@ export default function AdminHubPage() {
     </MainLayout>
   );
 }
+

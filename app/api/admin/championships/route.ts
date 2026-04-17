@@ -14,8 +14,14 @@ export async function GET(request: NextRequest) {
 
   try {
     const championships = await prisma.championship.findMany({
-      where: tenantWhere(auth),
+      where: auth.isSuperAdmin && !auth.actingOrganizationId ? {} : tenantWhere(auth),
       include: {
+        organization: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         _count: {
           select: { categories: true, participations: true, orders: true },
         },

@@ -75,7 +75,8 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Credenciais inválidas');
         }
 
-        const email = credentials.email.trim().toLowerCase();
+        const rawEmail = credentials.email.trim();
+        const email = rawEmail.toLowerCase();
         const ip = getClientIP();
 
         if (!checkRateLimit(email)) {
@@ -83,8 +84,8 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Muitas tentativas. Aguarde 15 minutos.');
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email },
+        const user = await prisma.user.findFirst({
+          where: { email: { equals: rawEmail, mode: 'insensitive' } },
           select: {
             id: true,
             email: true,

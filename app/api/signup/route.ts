@@ -8,7 +8,6 @@ import {
   isValidEmail,
   sanitizeInput,
   isValidBirthDate,
-  isValidInstagram,
   validateCPF,
 } from '@/lib/validation';
 import type { Invitation, Prisma } from '@prisma/client';
@@ -146,7 +145,6 @@ export async function POST(request: NextRequest) {
     const rawCpf = (body?.cpf ?? '').replace(/\D/g, '');
     const rawPhone = (body?.phone ?? '').replace(/\D/g, '');
     const rawBirthDate = (body?.birthDate ?? '').trim();
-    const rawInstagram = sanitizeInput(body?.instagram ?? '').trim();
     const inviteToken = (body?.token ?? '').trim();
 
     const hasTenantBypassAttempt = Boolean(body?.organizationId || body?.organizationSlug || body?.slug);
@@ -210,13 +208,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (rawInstagram && !isValidInstagram(rawInstagram)) {
-      return NextResponse.json(
-        { error: 'Instagram inválido. Use o formato @usuario' },
-        { status: 400 }
-      );
-    }
-
     if (!inviteToken) {
       const [existingEmail, existingCpf] = await Promise.all([
         prisma.user.findUnique({ where: { email: rawEmail }, select: { id: true } }),
@@ -252,7 +243,6 @@ export async function POST(request: NextRequest) {
             cpf: rawCpf || null,
             phone: rawPhone || null,
             birthDate: rawBirthDate ? new Date(rawBirthDate) : null,
-            instagram: rawInstagram || null,
             role: 'ADMIN',
             organizationId: organization.id,
           },
@@ -431,7 +421,6 @@ export async function POST(request: NextRequest) {
           cpf: rawCpf || null,
           phone: rawPhone || null,
           birthDate: rawBirthDate ? new Date(rawBirthDate) : null,
-          instagram: rawInstagram || null,
           role: invitation.role,
           organizationId: invitation.organizationId,
         },

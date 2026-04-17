@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import styled from 'styled-components';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Trophy, Plus, ArrowLeft, Calendar, MapPin, Users as UsersIcon, Tag } from 'lucide-react';
+import { Trophy, Plus, ArrowLeft, Calendar, MapPin, Users as UsersIcon, Tag, Building2, LogIn } from 'lucide-react';
 import MainLayout from '@/src/components/layout/main-layout';
 import Container from '@/src/components/ui/container';
 import Card from '@/src/components/ui/card';
@@ -141,6 +141,27 @@ const CountItem = styled.div`
   svg { color: ${({ theme }) => theme?.colors?.gold ?? '#FFD700'}; }
 `;
 
+const EnterButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0.5px solid ${({ theme }) => theme?.colors?.gold ?? '#FFD700'}40;
+  background: ${({ theme }) => theme?.colors?.gold ?? '#FFD700'}12;
+  color: ${({ theme }) => theme?.colors?.gold ?? '#FFD700'};
+  border-radius: ${({ theme }) => theme?.radii?.sm ?? '6px'};
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
 /* ── Modal ── */
 const ModalOverlay = styled.div`
   position: fixed;
@@ -233,6 +254,8 @@ interface ChampItem {
   slug: string;
   date: string;
   status: string;
+  organizationId: string;
+  organization?: { id: string; name: string } | null;
   venue: string | null;
   city: string | null;
   state: string | null;
@@ -247,6 +270,7 @@ export default function CampeonatosPage() {
   const [showModal, setShowModal] = useState(false);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [enteringOrgId, setEnteringOrgId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', date: '', venue: '', city: '', state: '', description: '' });
 
   const fetchChamps = useCallback(async () => {
@@ -277,7 +301,7 @@ export default function CampeonatosPage() {
     setSaving(true);
     try {
       const res = await fetch('/api/admin/championships', {
-  credentials: 'include',
+        credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
@@ -295,6 +319,31 @@ export default function CampeonatosPage() {
       setFormError('Erro de rede');
     }
     setSaving(false);
+  };
+
+  const handleEnterOrganization = async (organizationId: string) => {
+    if (!organizationId) return;
+    setFormError('');
+    setEnteringOrgId(organizationId);
+    try {
+      const res = await fetch('/api/super-admin/impersonation', {
+        credentials: 'include',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ organizationId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setFormError(data.error ?? 'Erro ao iniciar impersonação');
+        return;
+      }
+      await fetchChamps();
+      router.refresh();
+    } catch {
+      setFormError('Erro de rede ao iniciar impersonação');
+    } finally {
+      setEnteringOrgId(null);
+    }
   };
 
   if (authStatus === 'loading') {
@@ -316,6 +365,8 @@ export default function CampeonatosPage() {
           <Button icon={<Plus size={16} />} onClick={() => setShowModal(true)}>Novo Campeonato</Button>
         </PageHeader>
 
+        {formError && !showModal && <ErrorMsg>{formError}</ErrorMsg>}
+
         {loading ? (
           <LoadingText>Carregando campeonatos...</LoadingText>
         ) : champs.length === 0 ? (
@@ -336,9 +387,24 @@ export default function CampeonatosPage() {
                 {(c.city || c.state) && (
                   <MetaRow><MapPin size={13} /> {[c.city, c.state].filter(Boolean).join(', ')}</MetaRow>
                 )}
+                {session?.user?.role === 'SUPER_ADMIN' && (
+                  <MetaRow><Building2 size={13} /> {c.organization?.name ?? 'Organização não informada'}</MetaRow>
+                )}
                 <CountRow>
                   <CountItem><Tag size={13} /> {c._count.categories} categoria{c._count.categories !== 1 ? 's' : ''}</CountItem>
                   <CountItem><UsersIcon size={13} /> {c._count.participations} atleta{c._count.participations !== 1 ? 's' : ''}</CountItem>
+                  {session?.user?.role === 'SUPER_ADMIN' && c.organizationId && (
+                    <EnterButton
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleEnterOrganization(c.organizationId);
+                      }}
+                      disabled={enteringOrgId === c.organizationId}
+                    >
+                      <LogIn size={12} /> {enteringOrgId === c.organizationId ? 'Entrando...' : 'Entrar'}
+                    </EnterButton>
+                  )}
                 </CountRow>
               </Card>
             ))}
@@ -371,3 +437,4 @@ export default function CampeonatosPage() {
     </MainLayout>
   );
 }
+

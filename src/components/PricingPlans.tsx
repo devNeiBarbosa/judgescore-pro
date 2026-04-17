@@ -13,6 +13,8 @@ interface Plan {
   features: string[];
   buttonLabel: string;
   buttonLink?: string;
+  secondaryButtonLabel?: string;
+  secondaryButtonLink?: string;
   highlight?: boolean;
 }
 
@@ -120,8 +122,14 @@ const FeatureItem = styled.li`
   line-height: 1.5;
 `;
 
-const PlanButton = styled.a<{ $highlight?: boolean }>`
+const PlanActions = styled.div`
   margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const PlanButton = styled.a<{ $highlight?: boolean }>`
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -136,6 +144,20 @@ const PlanButton = styled.a<{ $highlight?: boolean }>`
   background: ${({ $highlight, theme }) => ($highlight ? theme?.colors?.gold ?? '#FFD700' : 'transparent')};
 `;
 
+const SecondaryPlanButton = styled.a`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  border-radius: ${({ theme }) => theme?.radii?.sm ?? '6px'};
+  padding: 7px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid ${({ theme }) => theme?.colors?.border ?? '#222222'};
+  color: ${({ theme }) => theme?.colors?.textSecondary ?? '#A0A0A0'};
+  background: transparent;
+`;
+
 const plans: Plan[] = [
   {
     name: 'Single',
@@ -148,7 +170,7 @@ const plans: Plan[] = [
       'Página pública',
       'Painel administrativo',
     ],
-    buttonLabel: 'Começar agora',
+    buttonLabel: 'Escolher plano',
     buttonLink: '/registro',
   },
   {
@@ -166,10 +188,10 @@ const plans: Plan[] = [
     ],
     buttonLabel: 'Escolher plano',
     buttonLink: '/registro',
-    highlight: true,
   },
   {
     name: 'Business',
+    badge: 'Destaque',
     price: 'R$ 51.900 / ano',
     description: 'Para operações maiores',
     features: [
@@ -178,9 +200,12 @@ const plans: Plan[] = [
       'Operação anual',
       'Prioridade máxima',
     ],
-    buttonLabel: 'Falar no WhatsApp',
-    buttonLink:
+    buttonLabel: 'Escolher plano',
+    buttonLink: '/registro',
+    secondaryButtonLabel: 'Falar no WhatsApp',
+    secondaryButtonLink:
       'https://wa.me/5581991003501?text=Olá! Vim pelo site da Judgescore Pro e quero saber mais sobre o plano Business.',
+    highlight: true,
   },
 ];
 
@@ -209,14 +234,26 @@ export default function PricingPlans() {
                 ))}
               </FeaturesList>
 
-              <PlanButton
-                href={plan.buttonLink ?? '/registro'}
-                $highlight={plan.highlight}
-                target={plan.buttonLink?.startsWith('http') ? '_blank' : undefined}
-                rel={plan.buttonLink?.startsWith('http') ? 'noopener noreferrer' : undefined}
-              >
-                {plan.buttonLabel}
-              </PlanButton>
+              <PlanActions>
+                <PlanButton
+                  href={plan.buttonLink ?? '/registro'}
+                  $highlight={plan.highlight}
+                  target={plan.buttonLink?.startsWith('http') ? '_blank' : undefined}
+                  rel={plan.buttonLink?.startsWith('http') ? 'noopener noreferrer' : undefined}
+                >
+                  {plan.buttonLabel}
+                </PlanButton>
+
+                {plan.secondaryButtonLabel && plan.secondaryButtonLink && (
+                  <SecondaryPlanButton
+                    href={plan.secondaryButtonLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {plan.secondaryButtonLabel}
+                  </SecondaryPlanButton>
+                )}
+              </PlanActions>
             </PlanCard>
           ))}
         </PlansGrid>

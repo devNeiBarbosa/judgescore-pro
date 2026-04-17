@@ -5,12 +5,13 @@ dist
 build
 coverage
 
-BASELINE_APROVADO.md
-BASELINE_APROVADO_*.md
-FASE*_COMPLETO.md
-SUPER_ADMIN_ESTRUTURA_*.md
-PRODUCTION_AUDIT.*
-STYLE_GUIDE.md
-BRANDING.md
-.abacus.donotdelete
-*.pdf
+.env
+.env.local
+.env.production
+.env.development
+
+.vercel
+*.log
+.DS_Store
+
+abacus.donotdelete
