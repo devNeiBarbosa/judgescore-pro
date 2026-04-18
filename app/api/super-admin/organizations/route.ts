@@ -39,6 +39,8 @@ export async function GET(request: NextRequest) {
   if (isErrorResponse(auth)) return auth;
 
   try {
+    // Segurança: endpoint exclusivo de SUPER_ADMIN.
+    // Mesmo com impersonação ativa, a listagem aqui continua global por desenho.
     const organizationsRaw = await prisma.organization.findMany({
       orderBy: { createdAt: 'desc' },
       include: {

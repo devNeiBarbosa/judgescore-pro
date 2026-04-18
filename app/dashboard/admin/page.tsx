@@ -227,17 +227,8 @@ export default function AdminHubPage() {
 
   const isCriticalBilling = billing?.billingStatus === 'EXPIRED' || billing?.billingStatus === 'INACTIVE';
 
-  const modules = session?.user?.role === 'SUPER_ADMIN'
-    ? [
-        ...baseModules,
-        {
-          icon: Shield,
-          title: 'Painel Super Admin',
-          desc: 'Gerenciar organizações e impersonação',
-          href: '/super-admin',
-        },
-      ]
-    : baseModules;
+  const isSuperAdmin = session?.user?.role === 'SUPER_ADMIN';
+
   return (
     <MainLayout>
       <Container>
@@ -271,7 +262,7 @@ export default function AdminHubPage() {
         <ExternalPaymentSettings />
 
         <Grid>
-          {modules.map((m) => (
+          {baseModules.map((m) => (
             <Card key={m.href} hoverable padding="20px" onClick={() => router.push(m.href)}>
               <CardInner>
                 <CardLeft>
@@ -285,6 +276,21 @@ export default function AdminHubPage() {
               </CardInner>
             </Card>
           ))}
+
+          {isSuperAdmin && (
+            <Card hoverable padding="20px" onClick={() => router.push('/super-admin')}>
+              <CardInner>
+                <CardLeft>
+                  <IconBox><Shield size={24} /></IconBox>
+                  <div>
+                    <CardTitle>Painel Super Admin</CardTitle>
+                    <CardDesc>Gerenciar organizações e impersonação</CardDesc>
+                  </div>
+                </CardLeft>
+                <Arrow><ChevronRight size={20} /></Arrow>
+              </CardInner>
+            </Card>
+          )}
         </Grid>
       </Container>
     </MainLayout>

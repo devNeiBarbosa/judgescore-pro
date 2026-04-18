@@ -2,6 +2,7 @@
 
 import React from 'react';
 import styled from 'styled-components';
+import { ArrowRight, MessageCircle } from 'lucide-react';
 
 import Container from '@/src/components/ui/container';
 
@@ -111,7 +112,8 @@ const PlanDescription = styled.p`
 
 const FeaturesList = styled.ul`
   margin: 0;
-  padding-left: 18px;
+  padding: 0;
+  list-style: none;
   display: grid;
   gap: 8px;
 `;
@@ -120,6 +122,17 @@ const FeatureItem = styled.li`
   color: ${({ theme }) => theme?.colors?.textSecondary ?? '#A0A0A0'};
   font-size: 0.875rem;
   line-height: 1.5;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+`;
+
+const FeatureIcon = styled(ArrowRight)`
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: ${({ theme }) => theme?.colors?.textMuted ?? '#707070'};
 `;
 
 const PlanActions = styled.div`
@@ -148,6 +161,7 @@ const SecondaryPlanButton = styled.a`
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   text-decoration: none;
   border-radius: ${({ theme }) => theme?.radii?.sm ?? '6px'};
   padding: 7px 10px;
@@ -158,11 +172,17 @@ const SecondaryPlanButton = styled.a`
   background: transparent;
 `;
 
+const SupportIcon = styled(MessageCircle)`
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+`;
+
 const plans: Plan[] = [
   {
     name: 'Single',
     price: 'R$ 6.700 / mês',
-    description: 'Para eventos pequenos ou testes',
+    description: 'Ideal para equipes em fase inicial',
     features: [
       'Até 2 campeonatos por ciclo',
       'Gestão básica de atletas',
@@ -177,7 +197,7 @@ const plans: Plan[] = [
     name: 'Premium',
     badge: 'Mais popular',
     price: 'R$ 5.000 / mês',
-    description: 'Ideal para organizações profissionais',
+    description: 'Escalável para operações em crescimento',
     features: [
       'Campeonatos ilimitados',
       'Gestão completa',
@@ -188,12 +208,12 @@ const plans: Plan[] = [
     ],
     buttonLabel: 'Escolher plano',
     buttonLink: '/registro',
+    highlight: true,
   },
   {
     name: 'Business',
-    badge: 'Destaque',
     price: 'R$ 51.900 / ano',
-    description: 'Para operações maiores',
+    description: 'Gerenciamento total de campeonatos com todas as features',
     features: [
       'Tudo do Premium',
       'Branding liberado',
@@ -202,10 +222,9 @@ const plans: Plan[] = [
     ],
     buttonLabel: 'Escolher plano',
     buttonLink: '/registro',
-    secondaryButtonLabel: 'Falar no WhatsApp',
+    secondaryButtonLabel: 'Suporte',
     secondaryButtonLink:
       'https://wa.me/5581991003501?text=Olá! Vim pelo site da Judgescore Pro e quero saber mais sobre o plano Business.',
-    highlight: true,
   },
 ];
 
@@ -230,7 +249,10 @@ export default function PricingPlans() {
 
               <FeaturesList>
                 {plan.features.map((feature) => (
-                  <FeatureItem key={feature}>{feature}</FeatureItem>
+                  <FeatureItem key={feature}>
+                    <FeatureIcon aria-hidden="true" />
+                    <span>{feature}</span>
+                  </FeatureItem>
                 ))}
               </FeaturesList>
 
@@ -250,6 +272,7 @@ export default function PricingPlans() {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
+                    <SupportIcon aria-hidden="true" />
                     {plan.secondaryButtonLabel}
                   </SecondaryPlanButton>
                 )}

@@ -13,8 +13,11 @@ export async function GET(request: NextRequest) {
   if (isErrorResponse(auth)) return auth;
 
   try {
+    const hasGlobalScope = auth.isSuperAdmin && !auth.actingOrganizationId;
+
     const users = await prisma.user.findMany({
-      where: tenantWhere(auth),
+      // Segurança: visão global somente para SUPER_ADMIN sem actingOrganizationId.
+      where: hasGlobalScope ? {} : tenantWhere(auth),
       select: {
         id: true,
         name: true,

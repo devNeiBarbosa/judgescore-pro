@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { useSession, signOut } from 'next-auth/react';
 import { usePathname, useRouter } from 'next/navigation';
-import { Menu, X, LogOut, User, LayoutDashboard, Shield } from 'lucide-react';
+import { Menu, X, LogOut, User, Home, Trophy, Users, Building2 } from 'lucide-react';
 import Container from '@/src/components/ui/container';
 import Logo from '@/src/components/ui/logo';
 import { ROLE_LABELS } from '@/lib/types';
@@ -27,6 +27,8 @@ const HeaderInner = styled.div`
 const LogoLink = styled.div`
   display: flex;
   align-items: center;
+  padding: 2px 0;
+  flex-shrink: 0;
   cursor: pointer;
 `;
 
@@ -80,6 +82,13 @@ const NavButton = styled.button<{ $variant?: 'primary' | 'ghost'; $active?: bool
         ? (theme?.colors?.background ?? '#050505')
         : '#fff'};
   }
+
+  @media (max-width: 767px) {
+    width: 100%;
+    justify-content: flex-start;
+    padding: 12px 16px;
+    min-height: 48px;
+  }
 `;
 
 const MenuToggle = styled.button`
@@ -100,6 +109,9 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const isAuth = status === 'authenticated';
+  const role = session?.user?.role;
+  const isAdminOrSuperAdmin = role === 'ADMIN' || role === 'SUPER_ADMIN';
+  const isSuperAdmin = role === 'SUPER_ADMIN';
 
   const handleNav = (path: string) => {
     setMenuOpen(false);
@@ -117,7 +129,7 @@ export default function Header() {
         <HeaderInner>
           <LogoLink onClick={() => handleNav('/')}>
             {/* 🔥 CORRETO */}
-            <Logo type="primary" height={46} />
+            <Logo type="primary" height={55} />
           </LogoLink>
 
           <MenuToggle onClick={() => setMenuOpen(!menuOpen)}>
@@ -127,10 +139,36 @@ export default function Header() {
           <Nav $open={menuOpen}>
             {isAuth ? (
               <>
-                <NavButton onClick={() => handleNav('/dashboard')}>
-                  <LayoutDashboard size={16} />
-                  Dashboard
-                </NavButton>
+                {isAdminOrSuperAdmin && (
+                  <>
+                    <NavButton onClick={() => handleNav('/dashboard')}>
+                      <Home size={16} />
+                      Dashboard
+                    </NavButton>
+
+                    <NavButton onClick={() => handleNav('/dashboard/admin/campeonatos')}>
+                      <Trophy size={16} />
+                      Campeonatos
+                    </NavButton>
+
+                    <NavButton onClick={() => handleNav('/dashboard/admin/usuarios')}>
+                      <Users size={16} />
+                      Usuários
+                    </NavButton>
+
+                    <NavButton onClick={() => handleNav('#')}>
+                      <User size={16} />
+                      Perfil
+                    </NavButton>
+
+                    {isSuperAdmin && (
+                      <NavButton onClick={() => handleNav('/super-admin')}>
+                        <Building2 size={16} />
+                        Organizações
+                      </NavButton>
+                    )}
+                  </>
+                )}
 
                 <NavButton onClick={handleLogout}>
                   <LogOut size={16} />

@@ -13,8 +13,11 @@ export async function GET(request: NextRequest) {
   if (isErrorResponse(auth)) return auth;
 
   try {
+    const hasGlobalScope = auth.isSuperAdmin && !auth.actingOrganizationId;
+
     const championships = await prisma.championship.findMany({
-      where: auth.isSuperAdmin && !auth.actingOrganizationId ? {} : tenantWhere(auth),
+      // Segurança: escopo global só é permitido para SUPER_ADMIN sem organização em impersonação.
+      where: hasGlobalScope ? {} : tenantWhere(auth),
       include: {
         organization: {
           select: {
@@ -64,23 +67,29 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Organização não encontrada' }, { status: 404 });
     }
 
-    if (organization.billingStatus !== 'ACTIVE') {
-      return NextResponse.json(
-        {
-          error:
-            'Seu plano expirou ou está inativo. Você ainda pode acessar resultados antigos, PDFs e auditoria, mas não pode criar novos campeonatos.',
-        },
-        { status: 403 },
-      );
-    }
+    const shouldBypassBillingValidation = auth.role === 'SUPER_ADMIN';
 
-    if (organization.billingPlanType === 'MONTHLY' && organization.championshipsUsedInCycle >= 2) {
-      return NextResponse.json(
-        {
-          error: 'Você atingiu o limite mensal de 2 campeonatos. Cancele um existente ou atualize seu plano.',
-        },
-        { status: 403 },
-      );
+    // Exceção explícita: SUPER_ADMIN pode criar campeonato mesmo sem plano ativo.
+    // ADMIN comum continua sujeito às regras de billing abaixo.
+    if (!shouldBypassBillingValidation) {
+      if (organization.billingStatus !== 'ACTIVE') {
+        return NextResponse.json(
+          {
+            error:
+              'Seu plano expirou ou está inativo. Você ainda pode acessar resultados antigos, PDFs e auditoria, mas não pode criar novos campeonatos.',
+          },
+          { status: 403 },
+        );
+      }
+
+      if (organization.billingPlanType === 'MONTHLY' && organization.championshipsUsedInCycle >= 2) {
+        return NextResponse.json(
+          {
+            error: 'Você atingiu o limite mensal de 2 campeonatos. Cancele um existente ou atualize seu plano.',
+          },
+          { status: 403 },
+        );
+      }
     }
 
     const name = sanitizeInput(body?.name ?? '');
@@ -115,17 +124,32 @@ export async function POST(request: NextRequest) {
       slug = `${slug}-${Date.now().toString(36)}`;
     }
 
-    const championship = await prisma.championship.create({
-      data: {
-        name,
-        slug,
-        date,
-        description: description || null,
-        venue: venue || null,
-        city: city || null,
-        state: state || null,
-        organizationId,
-      },
+    const championship = await prisma.$transaction(async (tx) => {
+      const createdChampionship = await tx.championship.create({
+        data: {
+          name,
+          slug,
+          date,
+          description: description || null,
+          venue: venue || null,
+          city: city || null,
+          state: state || null,
+          organizationId,
+        },
+      });
+
+      if (organization.billingPlanType === 'MONTHLY') {
+        await tx.organization.update({
+          where: { id: organizationId },
+          data: {
+            championshipsUsedInCycle: {
+              increment: 1,
+            },
+          },
+        });
+      }
+
+      return createdChampionship;
     });
 
     if (auth.isSuperAdmin) {

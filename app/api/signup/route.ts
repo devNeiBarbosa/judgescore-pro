@@ -142,6 +142,7 @@ export async function POST(request: NextRequest) {
     const rawEmail = (body?.email ?? '').trim().toLowerCase();
     const rawPassword = body?.password ?? '';
     const rawName = sanitizeInput(body?.name ?? '');
+    const rawOrganizationName = sanitizeInput(body?.organizationName ?? '');
     const rawCpf = (body?.cpf ?? '').replace(/\D/g, '');
     const rawPhone = (body?.phone ?? '').replace(/\D/g, '');
     const rawBirthDate = (body?.birthDate ?? '').trim();
@@ -209,6 +210,20 @@ export async function POST(request: NextRequest) {
     }
 
     if (!inviteToken) {
+      if (!rawOrganizationName) {
+        return NextResponse.json(
+          { error: 'Nome da organização é obrigatório' },
+          { status: 400 }
+        );
+      }
+
+      if (rawOrganizationName.length < 2 || rawOrganizationName.length > 120) {
+        return NextResponse.json(
+          { error: 'Nome da organização deve ter entre 2 e 120 caracteres' },
+          { status: 400 }
+        );
+      }
+
       const [existingEmail, existingCpf] = await Promise.all([
         prisma.user.findUnique({ where: { email: rawEmail }, select: { id: true } }),
         rawCpf
@@ -226,11 +241,11 @@ export async function POST(request: NextRequest) {
       const hashedPassword = await bcrypt.hash(rawPassword, 12);
 
       const { user } = await prisma.$transaction(async (tx) => {
-        const orgSlug = await generateUniqueOrganizationSlug(tx, rawName);
+        const orgSlug = await generateUniqueOrganizationSlug(tx, rawOrganizationName);
 
         const organization = await tx.organization.create({
           data: {
-            name: rawName,
+            name: rawOrganizationName,
             slug: orgSlug,
           },
         });

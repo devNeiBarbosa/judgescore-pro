@@ -467,7 +467,7 @@ export default function SuperAdminPage() {
             <Modal onClick={(e) => e.stopPropagation()}>
               <ModalTitle>Nova Organização</ModalTitle>
 
-              <Label htmlFor="new-org-name">Nome *</Label>
+              <Label htmlFor="new-org-name">Nome da organização *</Label>
               <TextInput
                 id="new-org-name"
                 value={newOrganizationName}

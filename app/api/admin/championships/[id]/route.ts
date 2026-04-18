@@ -110,3 +110,85 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }
+
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+  const auth = await requireRole(request, ['ADMIN', 'SUPER_ADMIN']);
+  if (isErrorResponse(auth)) return auth;
+
+  try {
+    const existing = await prisma.championship.findFirst({
+      where: tenantWhere(auth, 'organizationId', { id: params.id }),
+      select: { id: true, organizationId: true, name: true },
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Campeonato não encontrado' }, { status: 404 });
+    }
+
+    const organization = await prisma.organization.findUnique({
+      where: { id: existing.organizationId },
+      select: {
+        id: true,
+        billingStatus: true,
+        billingPlanType: true,
+        championshipsUsedInCycle: true,
+      },
+    });
+
+    if (!organization) {
+      return NextResponse.json({ error: 'Organização não encontrada' }, { status: 404 });
+    }
+
+    const shouldBypassBillingValidation = auth.role === 'SUPER_ADMIN';
+
+    // Exceção explícita: SUPER_ADMIN pode deletar campeonato mesmo sem plano ativo.
+    // ADMIN comum continua sujeito às regras de billing abaixo.
+    if (!shouldBypassBillingValidation && organization.billingStatus !== 'ACTIVE') {
+      return NextResponse.json(
+        {
+          error:
+            'Seu plano expirou ou está inativo. Você ainda pode acessar resultados antigos, PDFs e auditoria, mas não pode excluir campeonatos.',
+        },
+        { status: 403 },
+      );
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.championship.delete({
+        where: { id: existing.id },
+      });
+
+      if (organization.billingPlanType === 'MONTHLY' && organization.championshipsUsedInCycle > 0) {
+        await tx.organization.update({
+          where: { id: organization.id },
+          data: {
+            championshipsUsedInCycle: {
+              decrement: 1,
+            },
+          },
+        });
+      }
+    });
+
+    if (auth.isSuperAdmin) {
+      await logAuditAction(
+        auth.id,
+        auth.role,
+        'SUPER_ADMIN_CHAMPIONSHIP_DELETED',
+        organization.id,
+        'Championship',
+        existing.id,
+        {
+          name: existing.name,
+          actingOrganizationId: auth.actingOrganizationId,
+          isImpersonating: auth.isImpersonating,
+        },
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error: unknown) {
+    console.error('Delete championship error:', error instanceof Error ? error.message : 'Unknown');
+    return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
+  }
+}

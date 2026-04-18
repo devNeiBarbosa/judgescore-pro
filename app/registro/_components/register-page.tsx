@@ -176,6 +176,7 @@ export default function RegisterPage() {
 
   const [formData, setFormData] = useState({
     name: '',
+    organizationName: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -196,7 +197,8 @@ export default function RegisterPage() {
   }
 
   const handleChange =
-    (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    (field: keyof typeof formData) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
       let value = e?.target?.value ?? '';
 
       if (field === 'cpf') {
@@ -211,6 +213,12 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    const organizationName = (formData.organizationName ?? '').trim();
+    if (!inviteToken && (organizationName.length < 2 || organizationName.length > 120)) {
+      setError('Nome da organização deve ter entre 2 e 120 caracteres.');
+      return;
+    }
 
     const pwResult = validatePassword(formData.password ?? '');
     if (!pwResult.valid) {
@@ -233,11 +241,12 @@ export default function RegisterPage() {
 
     try {
       const res = await fetch('/api/signup', {
-  credentials: 'include',
+        credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: formData.name ?? '',
+          organizationName,
           email: formData.email ?? '',
           password: formData.password ?? '',
           cpf: cpfClean || undefined,
@@ -303,7 +312,7 @@ export default function RegisterPage() {
       <FormCard>
         <Card padding="40px">
           <LogoBlock onClick={() => router.push('/')}>
-            <Logo type="vertical" variant="dark" height={120} />
+            <Logo type="vertical" variant="dark" height={160} />
           </LogoBlock>
 
           <Title>
@@ -332,6 +341,15 @@ export default function RegisterPage() {
               value={formData.name ?? ''}
               onChange={handleChange('name')}
               required
+            />
+
+            <Input
+              label="Nome da organização"
+              placeholder="Nome da sua organização"
+              icon={<User size={18} />}
+              value={formData.organizationName ?? ''}
+              onChange={handleChange('organizationName')}
+              required={!inviteToken}
             />
 
             <Input
