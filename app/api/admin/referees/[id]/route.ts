@@ -81,7 +81,10 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       );
     }
 
-    await prisma.user.delete({ where: { id: referee.id } });
+    await prisma.$transaction(async (tx) => {
+      await tx.auditLog.deleteMany({ where: { userId: referee.id } });
+      await tx.user.delete({ where: { id: referee.id } });
+    });
 
     await logAuditAction(auth.id, auth.role, 'DELETE', organizationId, 'User', referee.id, {
       deletedUserEmail: referee.email,

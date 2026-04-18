@@ -6,12 +6,9 @@ import { requireRole, isErrorResponse, type AuthenticatedUser } from '@/lib/api-
 import { tenantWhere } from '@/lib/tenant';
 import { logAuditAction } from '@/lib/audit-log';
 
-function resolveOrganizationIdFromContext(auth: AuthenticatedUser): string | NextResponse {
-  if (auth.isSuperAdmin && !auth.actingOrganizationId) {
-    return NextResponse.json(
-      { error: 'SUPER_ADMIN precisa de impersonação ativa para atribuir árbitros' },
-      { status: 403 },
-    );
+function resolveOrganizationIdFromContext(auth: AuthenticatedUser, championshipOrganizationId: string): string | NextResponse {
+  if (auth.isSuperAdmin) {
+    return auth.actingOrganizationId ?? championshipOrganizationId;
   }
 
   if (!auth.actingOrganizationId) {
@@ -26,9 +23,6 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   if (isErrorResponse(auth)) return auth;
 
   try {
-    const organizationId = resolveOrganizationIdFromContext(auth);
-    if (organizationId instanceof NextResponse) return organizationId;
-
     const championship = await prisma.championship.findUnique({
       where: { id: params.id },
       select: { id: true, organizationId: true },
@@ -38,7 +32,10 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       return NextResponse.json({ error: 'Campeonato não encontrado' }, { status: 404 });
     }
 
-    if (championship.organizationId !== organizationId) {
+    const organizationId = resolveOrganizationIdFromContext(auth, championship.organizationId);
+    if (organizationId instanceof NextResponse) return organizationId;
+
+    if (!auth.isSuperAdmin && championship.organizationId !== organizationId) {
       return NextResponse.json({ error: 'Campeonato fora do contexto da organização ativa' }, { status: 403 });
     }
 
@@ -50,10 +47,11 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
 
     const referee = await prisma.user.findFirst({
-      where: tenantWhere(auth, 'organizationId', {
+      where: {
         id: refereeId,
+        organizationId,
         role: { in: ['ARBITRO_AUXILIAR', 'ARBITRO_CENTRAL'] },
-      }),
+      },
       select: { id: true, role: true, name: true },
     });
 
@@ -95,9 +93,6 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   if (isErrorResponse(auth)) return auth;
 
   try {
-    const organizationId = resolveOrganizationIdFromContext(auth);
-    if (organizationId instanceof NextResponse) return organizationId;
-
     const championship = await prisma.championship.findUnique({
       where: { id: params.id },
       select: { id: true, organizationId: true },
@@ -107,7 +102,10 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: 'Campeonato não encontrado' }, { status: 404 });
     }
 
-    if (championship.organizationId !== organizationId) {
+    const organizationId = resolveOrganizationIdFromContext(auth, championship.organizationId);
+    if (organizationId instanceof NextResponse) return organizationId;
+
+    if (!auth.isSuperAdmin && championship.organizationId !== organizationId) {
       return NextResponse.json({ error: 'Campeonato fora do contexto da organização ativa' }, { status: 403 });
     }
 

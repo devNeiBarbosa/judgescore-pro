@@ -325,6 +325,27 @@ export default function SuperAdminPage() {
     }
   };
 
+
+  const deleteOrganization = async (organizationId: string, organizationName: string) => {
+    if (!window.confirm(`Deseja realmente excluir a organização ${organizationName}?`)) return;
+
+    setSavingId(organizationId);
+    try {
+      const res = await fetch(`/api/super-admin/organizations/${organizationId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.error ?? 'Erro ao excluir organização');
+        return;
+      }
+      await fetchOrganizations();
+    } finally {
+      setSavingId(null);
+    }
+  };
+
   if (status === 'loading' || loading) {
     return <MainLayout><Container><p style={{ padding: 40 }}>Carregando...</p></Container></MainLayout>;
   }
@@ -453,6 +474,15 @@ export default function SuperAdminPage() {
                             Entrar
                           </Button>
                         )}
+
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          isLoading={savingId === org.id}
+                          onClick={() => deleteOrganization(org.id, org.name)}
+                        >
+                          Excluir
+                        </Button>
                       </Controls>
                     </Td>
                   </tr>

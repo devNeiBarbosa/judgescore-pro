@@ -390,17 +390,23 @@ export default function ChampDetailPage() {
         const data = await res.json();
         setChamp(data.championship);
         setStatusVal(data.championship.status);
+        fetchReferees(data.championship.organizationId);
       }
     } catch { /* ignore */ }
     setLoading(false);
   }, [champId]);
 
-  const fetchReferees = useCallback(async () => {
+  const fetchReferees = useCallback(async (organizationId?: string) => {
     try {
       const res = await fetch('/api/admin/users', { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
-        const refs = (data.users ?? []).filter((u: AvailableReferee) => u.role === 'ARBITRO_AUXILIAR' || u.role === 'ARBITRO_CENTRAL');
+        const refs = (data.users ?? []).filter((u: AvailableReferee & { organizationId?: string }) => {
+          const isRef = u.role === 'ARBITRO_AUXILIAR' || u.role === 'ARBITRO_CENTRAL';
+          if (!isRef) return false;
+          if (!organizationId) return true;
+          return u.organizationId === organizationId;
+        });
         setAvailableRefs(refs);
       }
     } catch { /* ignore */ }
@@ -424,9 +430,6 @@ export default function ChampDetailPage() {
     if (authStatus === 'authenticated' && canAccessPage) {
       fetchChamp();
       fetchInscriptions();
-      if (isAdminOrSuperAdmin) {
-        fetchReferees();
-      }
     } else if (authStatus === 'authenticated') {
       router.replace('/dashboard');
     }

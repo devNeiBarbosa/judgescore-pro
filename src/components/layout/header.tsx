@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { useSession, signOut } from 'next-auth/react';
 import { usePathname, useRouter } from 'next/navigation';
-import { Menu, X, LogOut, User, Home, Trophy, Users, Building2 } from 'lucide-react';
+import { Menu, X, LogOut, Home, Trophy, Users, Building2 } from 'lucide-react';
 import Container from '@/src/components/ui/container';
 import Logo from '@/src/components/ui/logo';
 import { ROLE_LABELS } from '@/lib/types';
@@ -127,8 +127,7 @@ export default function Header() {
     <HeaderWrapper>
       <Container>
         <HeaderInner>
-          <LogoLink onClick={() => handleNav('/')}>
-            {/* 🔥 CORRETO */}
+          <LogoLink onClick={() => handleNav((isAuth || pathname?.startsWith('/dashboard') || pathname?.startsWith('/super-admin')) ? '/dashboard' : '/')}>
             <Logo type="primary" height={55} />
           </LogoLink>
 
@@ -154,11 +153,6 @@ export default function Header() {
                     <NavButton onClick={() => handleNav('/dashboard/admin/usuarios')}>
                       <Users size={16} />
                       Usuários
-                    </NavButton>
-
-                    <NavButton onClick={() => handleNav('#')}>
-                      <User size={16} />
-                      Perfil
                     </NavButton>
 
                     {isSuperAdmin && (

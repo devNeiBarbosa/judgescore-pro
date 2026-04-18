@@ -266,6 +266,9 @@ export default function DashboardPage() {
   const adminActions = [
     { icon: Trophy, title: 'Campeonatos', desc: 'Criar e gerenciar campeonatos', href: '/dashboard/admin/campeonatos', ready: true },
     { icon: Users, title: 'Usuários', desc: 'Gerenciar atletas e árbitros', href: '/dashboard/admin/usuarios', ready: true },
+    ...(session?.user?.role === 'SUPER_ADMIN'
+      ? [{ icon: Shield, title: 'Painel Super Admin', desc: 'Gerenciar organizações e visão global', href: '/super-admin', ready: true }]
+      : []),
     { icon: Shield, title: 'Painel Admin', desc: 'Hub administrativo completo', href: '/dashboard/admin', ready: true },
   ];
 

@@ -15,3 +15,10 @@ coverage
 .DS_Store
 
 abacus.donotdelete
+
+BASELINE_APROVADO*.md
+FASE*_COMPLETO.md
+PRODUCTION_AUDIT.*
+STYLE_GUIDE.md
+SUPER_ADMIN_ESTRUTURA_*.md
+BRANDING.md

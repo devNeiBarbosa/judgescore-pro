@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Users, Trophy, BarChart3, ChevronRight, MailPlus, Shield } from 'lucide-react';
+import { Users, Trophy, BarChart3, ChevronRight, MailPlus } from 'lucide-react';
 import MainLayout from '@/src/components/layout/main-layout';
 import Container from '@/src/components/ui/container';
 import Card from '@/src/components/ui/card';
@@ -276,21 +276,6 @@ export default function AdminHubPage() {
               </CardInner>
             </Card>
           ))}
-
-          {isSuperAdmin && (
-            <Card hoverable padding="20px" onClick={() => router.push('/super-admin')}>
-              <CardInner>
-                <CardLeft>
-                  <IconBox><Shield size={24} /></IconBox>
-                  <div>
-                    <CardTitle>Painel Super Admin</CardTitle>
-                    <CardDesc>Gerenciar organizações e impersonação</CardDesc>
-                  </div>
-                </CardLeft>
-                <Arrow><ChevronRight size={20} /></Arrow>
-              </CardInner>
-            </Card>
-          )}
         </Grid>
       </Container>
     </MainLayout>

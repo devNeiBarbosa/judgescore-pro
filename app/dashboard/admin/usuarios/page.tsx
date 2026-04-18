@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import styled from 'styled-components';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Users, UserPlus, Shield, ArrowLeft, Search, X } from 'lucide-react';
+import { Users, UserPlus, Shield, ArrowLeft, Search, X, Trash2 } from 'lucide-react';
 import MainLayout from '@/src/components/layout/main-layout';
 import Container from '@/src/components/ui/container';
 import Card from '@/src/components/ui/card';
@@ -207,6 +207,31 @@ const LoadingText = styled.p`
   padding: 40px 0;
 `;
 
+const ActionButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: ${({ theme }) => theme?.radii?.md ?? '8px'};
+  border: 0.5px solid ${({ theme }) => theme?.colors?.border ?? '#222222'};
+  background: ${({ theme }) => theme?.colors?.surface ?? '#0F0F0F'};
+  color: ${({ theme }) => theme?.colors?.textSecondary ?? '#A0A0A0'};
+  font-size: 0.75rem;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    color: ${({ theme }) => theme?.colors?.error ?? '#FF3D3D'};
+    border-color: ${({ theme }) => theme?.colors?.error ?? '#FF3D3D'}40;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
 /* ─── Types ─── */
 interface UserItem {
   id: string;
@@ -226,6 +251,7 @@ export default function UsuariosPage() {
   const [showModal, setShowModal] = useState(false);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'ARBITRO_AUXILIAR' });
 
   const fetchUsers = useCallback(async () => {
@@ -249,23 +275,31 @@ export default function UsuariosPage() {
 
   const handleCreate = async () => {
     setFormError('');
-    if (!form.name || !form.email || !form.password) {
-      setFormError('Preencha todos os campos');
+    if (!form.name || !form.email || (form.role !== 'ATLETA' && !form.password)) {
+      setFormError('Preencha os campos obrigatórios');
       return;
     }
     setSaving(true);
     try {
-      const res = await fetch('/api/admin/users', {
-  credentials: 'include',
+      const endpoint = form.role === 'ATLETA' ? '/api/admin/athletes' : '/api/admin/users';
+      const payload = form.role === 'ATLETA'
+        ? { name: form.name, email: form.email, role: 'ATLETA' }
+        : form;
+
+      const res = await fetch(endpoint, {
+        credentials: 'include',
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) {
         setFormError(data.error ?? 'Erro ao criar usuário');
         setSaving(false);
         return;
+      }
+      if (form.role === 'ATLETA' && data.temporaryPassword) {
+        alert(`Atleta criado com sucesso. Senha temporária: ${data.temporaryPassword}`);
       }
       setShowModal(false);
       setForm({ name: '', email: '', password: '', role: 'ARBITRO_AUXILIAR' });
@@ -280,6 +314,54 @@ export default function UsuariosPage() {
     const q = search.toLowerCase();
     return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || (ROLE_LABELS[u.role] ?? '').toLowerCase().includes(q);
   });
+
+
+  const handleDelete = async (user: UserItem) => {
+    if (!session?.user?.role) return;
+    const isSuperAdmin = session.user.role === 'SUPER_ADMIN';
+    const isAdmin = session.user.role === 'ADMIN';
+
+    if (!isSuperAdmin && !(isAdmin && ['ATLETA', 'ARBITRO_AUXILIAR', 'ARBITRO_CENTRAL'].includes(user.role))) {
+      alert('Você não tem permissão para excluir este usuário.');
+      return;
+    }
+
+    const endpoint = user.role === 'ATLETA'
+      ? `/api/admin/athletes/${user.id}`
+      : ['ARBITRO_AUXILIAR', 'ARBITRO_CENTRAL'].includes(user.role)
+        ? `/api/admin/referees/${user.id}`
+        : `/api/admin/users/${user.id}`;
+
+    if (!window.confirm(`Deseja realmente excluir ${user.name}?`)) return;
+
+    setDeletingId(user.id);
+    try {
+      const res = await fetch(endpoint, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.error ?? 'Erro ao excluir usuário');
+        return;
+      }
+      await fetchUsers();
+    } catch {
+      alert('Erro de rede ao excluir usuário');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+
+  const canDeleteUser = (user: UserItem) => {
+    const currentRole = session?.user?.role;
+    if (!currentRole) return false;
+    if (session?.user?.email === user.email) return false;
+    if (currentRole === 'SUPER_ADMIN') return true;
+    if (currentRole === 'ADMIN') return ['ATLETA', 'ARBITRO_AUXILIAR', 'ARBITRO_CENTRAL'].includes(user.role);
+    return false;
+  };
 
   if (authStatus === 'loading') {
     return <MainLayout><Container><LoadingText>Carregando...</LoadingText></Container></MainLayout>;
@@ -315,13 +397,14 @@ export default function UsuariosPage() {
                 <Th>Role</Th>
                 <Th>Telefone</Th>
                 <Th>Cadastro</Th>
+                <Th>Ações</Th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><EmptyRow colSpan={5}>Carregando...</EmptyRow></tr>
+                <tr><EmptyRow colSpan={6}>Carregando...</EmptyRow></tr>
               ) : filtered.length === 0 ? (
-                <tr><EmptyRow colSpan={5}>Nenhum usuário encontrado</EmptyRow></tr>
+                <tr><EmptyRow colSpan={6}>Nenhum usuário encontrado</EmptyRow></tr>
               ) : (
                 filtered.map((u) => (
                   <tr key={u.id}>
@@ -330,6 +413,13 @@ export default function UsuariosPage() {
                     <Td><RolePill $role={u.role}>{ROLE_LABELS[u.role] ?? u.role}</RolePill></Td>
                     <Td>{u.phone ?? '—'}</Td>
                     <Td>{new Date(u.createdAt).toLocaleDateString('pt-BR')}</Td>
+                    <Td>
+                      {canDeleteUser(u) ? (
+                        <ActionButton type="button" title={deletingId === u.id ? 'Excluindo...' : 'Excluir usuário'} aria-label={deletingId === u.id ? 'Excluindo...' : 'Excluir usuário'} onClick={() => handleDelete(u)} disabled={deletingId === u.id}>
+                          <Trash2 size={14} />
+                        </ActionButton>
+                      ) : '—'}
+                    </Td>
                   </tr>
                 ))
               )}
@@ -345,13 +435,18 @@ export default function UsuariosPage() {
               <FormGroup>
                 <Input label="Nome completo" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
                 <Input label="Email" type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} />
-                <Input label="Senha" type="password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} />
+                {form.role !== 'ATLETA' ? (
+                  <Input label="Senha" type="password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} />
+                ) : (
+                  <SubText>Atletas recebem senha temporária gerada automaticamente.</SubText>
+                )}
                 <SelectWrapper>
                   <SelectLabel>Role</SelectLabel>
                   <Select value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}>
+                    <option value="ATLETA">Atleta</option>
                     <option value="ARBITRO_AUXILIAR">Árbitro Auxiliar</option>
                     <option value="ARBITRO_CENTRAL">Árbitro Central</option>
-                    <option value="ADMIN">Administrador</option>
+                    {session?.user?.role === 'SUPER_ADMIN' && <option value="ADMIN">Administrador</option>}
                   </Select>
                 </SelectWrapper>
               </FormGroup>
